@@ -5,7 +5,8 @@ import SignUp from "./screens/SignUp";
 import Dashboard from "./screens/Dashboard";
 import CustomHeader from "./components/CustomHeader"; // Adjust the path as necessary
 import { getAuth } from "firebase/auth";
-import { useNavigation } from "@react-navigation/native";
+import Tutorial from "./screens/Tutorial";
+import Settings from "./screens/Settings"; // Import the Settings screen
 
 const Stack = createNativeStackNavigator();
 
@@ -17,7 +18,7 @@ export default function Index() {
         .signOut()
         .then(() => {
           console.log("User signed out successfully");
-          navigation.navigate("Landing"); // Optional: Navigate to Landing after sign-out
+          navigation.navigate("Landing"); // Navigate to Landing after sign-out
         })
         .catch((error) => {
           console.error("Sign out error:", error);
@@ -32,19 +33,9 @@ export default function Index() {
       initialRouteName="Landing"
       screenOptions={{
         headerShown: true,
-        header: ({ navigation }) => (
-          <CustomHeader
-          />
-        ),
+        header: ({ navigation }) => <CustomHeader navigation={navigation} />, // Pass navigation here
       }}
     >
-      <Stack.Screen
-        name="Landing"
-        component={LandingScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="SignUp" component={SignUp} />
       <Stack.Screen
         name="Dashboard"
         component={Dashboard}
@@ -53,12 +44,40 @@ export default function Index() {
             <CustomHeader
               title="Dashboard"
               showBackButton={false}
-              showSignOutButton={true}
-              onSignOut={() => handleSignOut(navigation)} // Correct usage
+              showSettingsButton={true}
+              onSignOut={() => handleSignOut(navigation)} // Pass handleSignOut to CustomHeader
             />
           ),
         }}
       />
+      <Stack.Screen
+        name="Landing"
+        component={LandingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="SignUp" component={SignUp} />
+      <Stack.Screen name="Tutorial" component={Tutorial} />
+      <Stack.Screen
+        name="Settings"
+        options={({ navigation }) => ({
+          header: ({ navigation }) => (
+            <CustomHeader
+              title="Settings"
+              showBackButton={true}
+              showSettingsButton={false}
+              onSignOut={() => handleSignOut(navigation)} // Pass handleSignOut to CustomHeader
+            />
+          ),
+        })}
+      >
+        {(props) => (
+          <Settings
+            {...props}
+            onSignOut={() => handleSignOut(props.navigation)}
+          />
+        )}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 }

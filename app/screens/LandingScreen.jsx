@@ -3,13 +3,12 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Colors from "../../assets/colors";
-import bevoWorkout from "../../assets/images/bevoworkout.png"; // Adjust the path as necessary
-import { auth } from "../../firebaseConfig"; // Import auth correctly from firebaseConfig
+import bevoWorkout from "../../assets/images/bevoworkout.png";
+import { auth } from "../../firebaseConfig";
 
 const LandingScreen = () => {
   const navigation = useNavigation();
 
-  // Mocking the logged-in state (replace this with actual auth state)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -17,12 +16,12 @@ const LandingScreen = () => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setIsLoggedIn(true);
+        navigation.navigate("Dashboard");
       } else {
-        setIsLoggedIn(false);  // User is logged out
+        setIsLoggedIn(false); 
       }
     });
 
-    // Clean up the subscription when the component unmounts
     return () => unsubscribe();
   }, [navigation]);
 
@@ -95,15 +94,15 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 36,
-    fontWeight: "700", // Make it bold and prominent
+    fontWeight: "700",
     color: Colors.dark_gray,
     marginBottom: 12,
     textAlign: "center",
     letterSpacing: 2,
   },
   appNameText: {
-    fontSize: 40, // Slightly larger for emphasis
-    fontWeight: "700", // Bold and prominent
+    fontSize: 40,
+    fontWeight: "700",
     color: Colors.ut_burnt_orange,
     textAlign: "center",
     marginBottom: 10,
@@ -114,7 +113,7 @@ const styles = StyleSheet.create({
     color: Colors.dark_gray,
     marginBottom: 50,
     textAlign: "center",
-    fontStyle: "italic", // Subtle contrast with the title
+    fontStyle: "italic", 
   },
   button: {
     paddingVertical: 12,

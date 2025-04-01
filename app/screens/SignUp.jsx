@@ -1,27 +1,49 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, TextInput } from 'react-native';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // Firebase Auth imports
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore'; // Firestore imports
 import Colors from '../../assets/colors'; // Adjust the path as necessary
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState(''); // New state for user's name
+
+  const navigation = useNavigation(); // Initialize navigation
 
   const handleSignUp = async () => {
-    if (!email || !password) {
-      Alert.alert('Please fill in both fields');
+    if (!email || !password || !name) {
+      Alert.alert('Please fill in all fields');
       return;
     }
 
     try {
       const auth = getAuth(); // Initialize Firebase Auth
-      await createUserWithEmailAndPassword(auth, email, password); // Sign up user with email and password
-      Alert.alert('Sign Up Successful', `Welcome ${email}!`);
-      // Optionally, navigate to the login page or dashboard after sign-up
-      // navigation.navigate('Login'); // Uncomment if you are using react-navigation
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Update user profile with name
+      await updateProfile(user, { displayName: name });
+
+      // Save user data to Firestore
+      const db = getFirestore(); // Initialize Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        name: name,
+        email: email,
+        height: '', // Add other fields that will be updated later
+        weight: '',
+        goal: '',
+        targetWeight: '',
+      });
+
+      Alert.alert('Sign Up Successful', `Welcome ${name}!`);
+
+      // Navigate to the Tutorial screen after sign-up
+      navigation.navigate('Tutorial');
     } catch (error) {
       console.error(error);
-      Alert.alert('Failed to sign up', error.message); // Show the error message if signup fails
+      Alert.alert('Failed to sign up', error.message);
     }
   };
 
@@ -32,8 +54,14 @@ const SignUp = () => {
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+      />
+      <TextInput
+        style={styles.input}
         value={email}
+        placeholder="Email"
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
@@ -60,50 +88,36 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 20,
+    padding: 20,
+    backgroundColor: Colors.white, // Use your theme color
   },
   title: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: Colors.ut_burnt_orange,
-    marginBottom: 12,
-    textAlign: 'center',
-    letterSpacing: 2,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   subtitle: {
-    fontSize: 20,
-    color: Colors.dark_gray,
-    marginBottom: 50,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    fontSize: 16,
+    color: Colors.gray, // Use your theme color
+    marginBottom: 20,
   },
   input: {
     width: '100%',
     padding: 12,
-    marginBottom: 20,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: Colors.dark_gray,
-    backgroundColor: Colors.white,
-    fontSize: 16,
+    borderColor: Colors.lightGray, // Use your theme color
+    marginBottom: 15,
   },
   signUpButton: {
+    backgroundColor: Colors.primary, // Use your theme color
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: Colors.ut_burnt_orange,
+    paddingHorizontal: 20,
     borderRadius: 5,
-    alignItems: 'center',
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 5,
-    elevation: 5, // For Android
   },
   buttonText: {
-    color: Colors.white,
+    color: Colors.white, // Use your theme color
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
 });
