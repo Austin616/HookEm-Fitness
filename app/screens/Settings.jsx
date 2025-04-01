@@ -35,6 +35,7 @@ function Settings({ onSignOut, userId }) {
   const [targetWeight, setTargetWeight] = useState("");
   const [isWeightPickerVisible, setIsWeightPickerVisible] = useState(false);
   const[isGoalPickerVisible, setIsGoalPickerVisible] = useState(false);
+  const [isTargetWeightPickerVisible, setIsTargetWeightPickerVisible] = useState(false);
 
   useEffect(() => {
     const getPermission = async () => {
@@ -307,6 +308,48 @@ function Settings({ onSignOut, userId }) {
         )}
       </View>
 
+      {/* Target Weight */}
+      <View style={styles.settingsSection}>
+        <Text style={styles.settingLabel}>Target Weight</Text>
+        {!isTargetWeightPickerVisible ? (
+          <TouchableOpacity
+            onPress={() => setIsTargetWeightPickerVisible(true)}
+          >
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputText}>
+                {targetWeight ? `${targetWeight} lbs` : "Select target weight"}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={targetWeight}
+              onValueChange={(itemValue) => setTargetWeight(itemValue)}
+              style={styles.picker}
+            >
+              {[...Array(300).keys()].map((i) => (
+                <Picker.Item
+                  key={i}
+                  label={`${i + 1} lbs`}
+                  value={`${i + 1}`}
+                />
+              ))}
+            </Picker>
+          </View>
+        )
+
+        }
+        {isTargetWeightPickerVisible && (
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => setIsTargetWeightPickerVisible(false)}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       <TouchableOpacity
         style={styles.saveChangesButton}
         onPress={handleSaveChanges}
@@ -412,9 +455,11 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     backgroundColor: Colors.ut_burnt_orange,
-    padding: 10,
     borderRadius: 8,
     marginTop: 15,
+    width: "25%",
+    alignSelf: "center",
+    padding: 5
   },
   doneButtonText: {
     fontSize: 16,
