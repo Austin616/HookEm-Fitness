@@ -7,27 +7,11 @@ import CustomHeader from "./components/CustomHeader"; // Adjust the path as nece
 import { getAuth } from "firebase/auth";
 import Tutorial from "./screens/Tutorial";
 import Settings from "./screens/Settings"; // Import the Settings screen
+import SignOut from "./components/SignOut"; // Import the SignOut utility
 
 const Stack = createNativeStackNavigator();
 
 export default function Index() {
-  const handleSignOut = (navigation) => {
-    try {
-      const auth = getAuth();
-      auth
-        .signOut()
-        .then(() => {
-          console.log("User signed out successfully");
-          navigation.navigate("Landing"); // Navigate to Landing after sign-out
-        })
-        .catch((error) => {
-          console.error("Sign out error:", error);
-        });
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
-
   return (
     <Stack.Navigator
       initialRouteName="Landing"
@@ -66,17 +50,22 @@ export default function Index() {
               title="Settings"
               showBackButton={true}
               showSettingsButton={false}
-              onSignOut={() => handleSignOut(navigation)} // Pass handleSignOut to CustomHeader
             />
           ),
         })}
       >
-        {(props) => (
-          <Settings
-            {...props}
-            onSignOut={() => handleSignOut(props.navigation)}
-          />
-        )}
+        {(props) => {
+          const auth = getAuth();
+          const userId = auth.currentUser ? auth.currentUser.uid : null; // Get userId from Firebase
+
+          return (
+            <Settings
+              {...props}
+              userId={userId} // Pass the userId to Settings screen
+              onSignOut={() => SignOut(props.navigation)} // Ensure onSignOut is called with navigation
+            />
+          );
+        }}
       </Stack.Screen>
     </Stack.Navigator>
   );
