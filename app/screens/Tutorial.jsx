@@ -113,14 +113,14 @@ const Tutorial = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.card,
-                goal === "buildMuscle" && styles.selectedCard,
+                goal === "Build Muscle" && styles.selectedCard,
               ]}
-              onPress={() => setGoal("buildMuscle")}
+              onPress={() => setGoal("Build Muscle")}
             >
               <Text
                 style={[
                   styles.cardText,
-                  goal === "buildMuscle" && styles.selectedCardText,
+                  goal === "Build Muscle" && styles.selectedCardText,
                 ]}
               >Build Muscle</Text>
             </TouchableOpacity>
@@ -128,14 +128,14 @@ const Tutorial = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.card,
-                goal === "loseWeight" && styles.selectedCard,
+                goal === "Lose Weight" && styles.selectedCard,
               ]}
-              onPress={() => setGoal("loseWeight")}
+              onPress={() => setGoal("Lose Weight")}
             >
              <Text
                 style={[
                   styles.cardText,
-                  goal === "loseWeight" && styles.selectedCardText,
+                  goal === "Lose Weight" && styles.selectedCardText,
                 ]}
               >Lose Weight</Text>
             </TouchableOpacity>
@@ -143,14 +143,14 @@ const Tutorial = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.card,
-                goal === "maintainWeight" && styles.selectedCard,
+                goal === "Maintain Weight" && styles.selectedCard,
               ]}
-              onPress={() => setGoal("maintainWeight")}
+              onPress={() => setGoal("Maintain Weight")}
             >
               <Text
                 style={[
                   styles.cardText,
-                  goal === "maintainWeight" && styles.selectedCardText,
+                  goal === "Maintain Weight" && styles.selectedCardText,
                 ]}
               >
                 Maintain Weight

@@ -1,35 +1,50 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Image, TextInput, Alert, ScrollView } from "react-native";
-import * as ImagePicker from "expo-image-picker"; 
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  Alert,
+  ScrollView,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Picker } from "@react-native-picker/picker";
 import { storage, db } from "../../firebaseConfig";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; 
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore"; 
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import Colors from "../../assets/colors";
 import profileIcon from "../../assets/images/profile-icon.png";
-import { useNavigation } from "@react-navigation/native"; 
+import { useNavigation } from "@react-navigation/native";
 
 function Settings({ onSignOut, userId }) {
   const [profilePicture, setProfilePicture] = useState(profileIcon);
+  const [newProfilePicture, setNewProfilePicture] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
   const navigation = useNavigation();
-  
-  // State for the editable fields
+
+  // Editable fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [height, setHeight] = useState("");
+  const [isHeightPickerVisible, setIsHeightPickerVisible] = useState(false);
+  const [heightFeet, setHeightFeet] = useState("5");
+  const [heightInches, setHeightInches] = useState("0");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
+  const [isWeightPickerVisible, setIsWeightPickerVisible] = useState(false);
+  const[isGoalPickerVisible, setIsGoalPickerVisible] = useState(false);
 
   useEffect(() => {
     const getPermission = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       setHasPermission(status === "granted");
     };
     getPermission();
   }, []);
 
-  // Fetch the profile data when the component loads
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
@@ -39,7 +54,10 @@ function Settings({ onSignOut, userId }) {
           const userData = userDoc.data();
           setName(userData.name || "");
           setEmail(userData.email || "");
-          setHeight(userData.height || "");
+          setHeightFeet(userData.height?.split("'")[0] || "5");
+          setHeightInches(
+            userData.height?.split("'")[1]?.replace("in", "").trim() || "0"
+          );
           setWeight(userData.weight || "");
           setGoal(userData.goal || "");
           setTargetWeight(userData.targetWeight || "");
@@ -57,149 +75,246 @@ function Settings({ onSignOut, userId }) {
     }
   }, [userId]);
 
-  // Function to handle profile picture change
   const handleChangeProfilePicture = async () => {
-    if (hasPermission === null || !hasPermission) {
-      Alert.alert("Permission not granted", "You need to grant permission to access the media library.");
+    if (!hasPermission) {
+      Alert.alert(
+        "Permission not granted",
+        "You need to grant permission to access the media library."
+      );
       return;
     }
 
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1, 1], // Square crop
-      quality: 1, // High quality
+      aspect: [1, 1],
+      quality: 1,
     });
 
     if (!result.canceled) {
       const selectedImage = result.assets[0].uri;
-      setProfilePicture({ uri: selectedImage });
+      setNewProfilePicture(selectedImage);
+    }
+  };
 
-      // Upload the image to Firebase Storage
-      const response = await fetch(selectedImage);
+  const uploadProfilePicture = async () => {
+    if (!newProfilePicture) return null;
+
+    try {
+      const response = await fetch(newProfilePicture);
       const blob = await response.blob();
       const storageRef = ref(storage, `profilePictures/${userId}.jpg`);
       const uploadTask = uploadBytesResumable(storageRef, blob);
 
-      uploadTask.on(
-        "state_changed",
-        null,
-        (error) => {
-          console.error("Upload error:", error);
-          Alert.alert("Upload failed", "There was an error uploading your profile picture.");
-        },
-        async () => {
-          // Get the download URL and update Firestore
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          const userDocRef = doc(db, "users", userId);
-          await updateDoc(userDocRef, { profilePicture: downloadURL });
-          Alert.alert("Success", "Profile picture updated successfully!");
-        }
-      );
-    } else {
-      console.log("Image selection was canceled or failed.");
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          null,
+          (error) => {
+            console.error("Upload error:", error);
+            Alert.alert(
+              "Upload failed",
+              "There was an error uploading your profile picture."
+            );
+            reject(error);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          }
+        );
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
     }
   };
 
- const handleSaveChanges = async () => {
-  try {
-    const userDocRef = doc(db, "users", userId);
-    
-    // Prepare the data, ensuring the profile picture is included
-    const updatedProfileData = {
-      name: name,
-      email: email,
-      height: height,
-      weight: weight,
-      goal: goal,
-      targetWeight: targetWeight,
-      profilePicture: profilePicture.uri || profilePicture, // Preserve existing profile picture if not updated
-    };
-    
-    // Update the Firestore document
-    await updateDoc(userDocRef, updatedProfileData);
-    Alert.alert("Success", "Profile updated successfully!");
-    navigation.navigate('Dashboard'); 
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    Alert.alert("Error", "There was an error updating your profile.");
-  }
-};
+  const handleSaveChanges = async () => {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      let profileImageUrl = profilePicture.uri;
 
+      if (newProfilePicture) {
+        profileImageUrl = await uploadProfilePicture();
+        setProfilePicture({ uri: profileImageUrl });
+      }
+
+      const updatedProfileData = {
+        name,
+        email,
+        height: `${heightFeet}' ${heightInches}in`,
+        weight,
+        goal,
+        targetWeight,
+        profilePicture: profileImageUrl,
+      };
+
+      await updateDoc(userDocRef, updatedProfileData);
+      setNewProfilePicture(null);
+      Alert.alert("Success", "Profile updated successfully!");
+      navigation.navigate("Dashboard");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "There was an error updating your profile.");
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
       <TouchableOpacity onPress={handleChangeProfilePicture}>
-        <Image source={profilePicture} style={styles.profileImage} />
+        <Image
+          source={
+            newProfilePicture ? { uri: newProfilePicture } : profilePicture
+          }
+          style={styles.profileImage}
+        />
       </TouchableOpacity>
-      
+
       <Text style={styles.title}>Settings</Text>
 
-      <View style={styles.settingsSection}>
-        <Text style={styles.settingLabel}>Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter your name"
-        />
-      </View>
+      {[
+        { label: "Name", value: name, setter: setName },
+        { label: "Email", value: email, setter: setEmail },
+      ].map((field, index) => (
+        <View key={index} style={styles.settingsSection}>
+          <Text style={styles.settingLabel}>{field.label}</Text>
+          <TextInput
+            style={styles.input}
+            value={field.value}
+            onChangeText={field.setter}
+            placeholder={`Enter ${field.label}`}
+          />
+        </View>
+      ))}
 
-      <View style={styles.settingsSection}>
-        <Text style={styles.settingLabel}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter your email"
-        />
-      </View>
-
+      {/* Height */}
       <View style={styles.settingsSection}>
         <Text style={styles.settingLabel}>Height</Text>
-        <TextInput
-          style={styles.input}
-          value={height}
-          onChangeText={setHeight}
-          placeholder="Enter your height"
-        />
+        {!isHeightPickerVisible ? (
+          <TouchableOpacity onPress={() => setIsHeightPickerVisible(true)}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputText}>
+                {heightFeet} ft {heightInches} in
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={heightFeet}
+              onValueChange={(itemValue) => setHeightFeet(itemValue)}
+              style={styles.picker}
+            >
+              {[...Array(5).keys()].map((i) => (
+                <Picker.Item key={i} label={`${i + 3} ft`} value={`${i + 3}`} />
+              ))}
+            </Picker>
+
+            <Picker
+              selectedValue={heightInches}
+              onValueChange={(itemValue) => setHeightInches(itemValue)}
+              style={styles.picker}
+            >
+              {[...Array(12).keys()].map((i) => (
+                <Picker.Item key={i} label={`${i} in`} value={`${i}`} />
+              ))}
+            </Picker>
+          </View>
+        )}
+
+        {isHeightPickerVisible && (
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => setIsHeightPickerVisible(false)}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
+      {/* Weight */}
       <View style={styles.settingsSection}>
         <Text style={styles.settingLabel}>Weight</Text>
-        <TextInput
-          style={styles.input}
-          value={weight}
-          onChangeText={setWeight}
-          placeholder="Enter your weight"
-        />
+        {!isWeightPickerVisible ? (
+          <TouchableOpacity onPress={() => setIsWeightPickerVisible(true)}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputText}>
+                {weight ? `${weight} lbs` : "Select your weight"}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={weight}
+              onValueChange={(itemValue) => setWeight(itemValue)}
+              style={styles.picker}
+            >
+              {[...Array(300).keys()].map((i) => (
+                <Picker.Item
+                  key={i}
+                  label={`${i + 1} lbs`}
+                  value={`${i + 1}`}
+                />
+              ))}
+            </Picker>
+          </View>
+        )}
+
+        {isWeightPickerVisible && (
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => setIsWeightPickerVisible(false)}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
+      {/* Goal */}
       <View style={styles.settingsSection}>
         <Text style={styles.settingLabel}>Goal</Text>
-        <TextInput
-          style={styles.input}
-          value={goal}
-          onChangeText={setGoal}
-          placeholder="Enter your goal"
-        />
+        {!isGoalPickerVisible ? (
+          <TouchableOpacity onPress={() => setIsGoalPickerVisible(true)}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputText}>
+                {goal ? goal : "Select your goal"}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={goal}
+              onValueChange={(itemValue) => setGoal(itemValue)}
+              style={styles.picker}
+            >
+              {["Lose Weight", "Build Muscle", "Maintain"].map((g) => (
+                <Picker.Item key={g} label={g} value={g} />
+              ))}
+            </Picker>
+          </View>
+        )}
+
+        {isGoalPickerVisible && (
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => setIsGoalPickerVisible(false)}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      <View style={styles.settingsSection}>
-        <Text style={styles.settingLabel}>Target Weight</Text>
-        <TextInput
-          style={styles.input}
-          value={targetWeight}
-          onChangeText={setTargetWeight}
-          placeholder="Enter your target weight"
-        />
-      </View>
-
-      <TouchableOpacity onPress={handleSaveChanges}>
+      <TouchableOpacity
+        style={styles.saveChangesButton}
+        onPress={handleSaveChanges}
+      >
         <Text style={styles.saveChangesText}>Save Changes</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={onSignOut}>
+      <TouchableOpacity style={styles.signOutButton} onPress={onSignOut}>
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -215,27 +330,28 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   profileImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 70, 
-    marginBottom: 30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignSelf: "center",
+    marginBottom: 20,
     borderWidth: 3,
     borderColor: Colors.ut_burnt_orange,
     backgroundColor: Colors.landing_page_logo,
   },
   title: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 20,
+    textAlign: "center",
     color: Colors.dark_gray,
+    marginBottom: 20,
   },
   settingsSection: {
     width: "100%",
-    paddingVertical: 10,
     marginBottom: 15,
   },
   settingLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     color: Colors.dark_gray,
   },
@@ -244,29 +360,66 @@ const styles = StyleSheet.create({
     color: Colors.dark_gray,
     borderWidth: 1,
     borderColor: Colors.light_gray,
-    padding: 10,
+    padding: 12,
     marginTop: 5,
-    borderRadius: 5,
+    borderRadius: 8,
+    backgroundColor: Colors.white,
+  },
+  saveChangesButton: {
+    backgroundColor: Colors.ut_burnt_orange,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 20,
   },
   saveChangesText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: Colors.ut_burnt_orange,
+    color: "white",
     textAlign: "center",
-    
-    paddingVertical: 10,
-    borderRadius: 5,
-    
   },
-
+  signOutButton: {
+    backgroundColor: Colors.dark_gray,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  },
   signOutText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: Colors.red,
+    color: "white",
     textAlign: "center",
-    marginBottom: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-    
+  },
+  inputContainer: {
+    borderWidth: 1,
+    borderColor: Colors.light_gray,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: Colors.white,
+  },
+  inputText: {
+    fontSize: 16,
+    color: Colors.dark_gray,
+  },
+  pickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  picker: {
+    flex: 1,
+    height: 200,
+  },
+  doneButton: {
+    backgroundColor: Colors.ut_burnt_orange,
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
   },
 });
