@@ -6,12 +6,12 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore"; 
 import Colors from "../../assets/colors";
 import profileIcon from "../../assets/images/profile-icon.png";
-import { useNavigation } from "@react-navigation/native"; // Import useNavigation for navigation
+import { useNavigation } from "@react-navigation/native"; 
 
 function Settings({ onSignOut, userId }) {
   const [profilePicture, setProfilePicture] = useState(profileIcon);
   const [hasPermission, setHasPermission] = useState(null);
-  const navigation = useNavigation(); // Import useNavigation to navigate after saving changes
+  const navigation = useNavigation();
   
   // State for the editable fields
   const [name, setName] = useState("");
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: Colors.red, // Use a contrasting color for sign out
+    color: Colors.red,
     textAlign: "center",
     marginBottom: 20,
     paddingVertical: 10,

@@ -17,11 +17,12 @@ const Login = () => {
     }
   
     try {
-      await signInWithEmailAndPassword(auth, email, password); // Sign in user with email and password
+      await signInWithEmailAndPassword(auth, email, password);
       Alert.alert('Login Successful', `Welcome back ${email}!`);
-      navigation.navigate('Dashboard'); // Navigate to the dashboard after successful login
+      console.log('Login successful!');
+      navigation.navigate('Dashboard');
     } catch (error) {
-      console.error('Error during login:', error.code, error.message);  // Enhanced error logging
+      console.error('Error during login:', error.code, error.message);
       if (error.code === 'auth/invalid-email') {
         Alert.alert('Invalid Email', 'Please enter a valid email address.');
       } else if (error.code === 'auth/wrong-password') {

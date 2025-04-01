@@ -4,7 +4,6 @@ import {
   Text,
   Button,
   StyleSheet,
-  Alert,
   ScrollView,
   TouchableOpacity,
   TextInput,
@@ -12,15 +11,15 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { doc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { db } from "../../firebaseConfig"; // Ensure correct path to firebaseConfig
-import Colors from "../../assets/colors"; // Import colors for styling
+import { db } from "../../firebaseConfig";
+import Colors from "../../assets/colors";
 
 const Tutorial = ({ navigation }) => {
   const [step, setStep] = useState(1);
-  const [heightFeet, setHeightFeet] = useState("5"); // Default height feet value
-  const [heightInches, setHeightInches] = useState("0"); // Default height inches value
+  const [heightFeet, setHeightFeet] = useState("5");
+  const [heightInches, setHeightInches] = useState("0"); 
   const [weight, setWeight] = useState("");
-  const [goal, setGoal] = useState("buildMuscle"); // Set default goal
+  const [goal, setGoal] = useState("buildMuscle");
   const [targetWeight, setTargetWeight] = useState("");
 
   const handleNextStep = () => {
@@ -95,7 +94,7 @@ const Tutorial = ({ navigation }) => {
           <Text style={styles.title}>Enter Your Weight</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your weight in kg"
+            placeholder="Enter your weight in lbs"
             value={weight}
             onChangeText={setWeight}
             keyboardType="numeric"
@@ -166,7 +165,7 @@ const Tutorial = ({ navigation }) => {
           <Text style={styles.title}>Enter Your Target Weight (Optional)</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter target weight in kg (optional)"
+            placeholder="Enter target weight in lbx (optional)"
             value={targetWeight}
             onChangeText={setTargetWeight}
             keyboardType="numeric"
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: Colors.primary, // Using primary background color
+    backgroundColor: Colors.primary,
   },
 
   section: {
@@ -214,7 +213,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
-    color: Colors.dark_gray, // Dark gray for title text
+    color: Colors.dark_gray,
   },
 
   pickerContainer: {
@@ -233,8 +232,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: Colors.ut_burnt_orange, // Border color with UT burnt orange
-    backgroundColor: Colors.white, // White background for input
+    borderColor: Colors.ut_burnt_orange,
+    backgroundColor: Colors.white,
     marginBottom: 15,
   },
 
@@ -264,7 +263,7 @@ const styles = StyleSheet.create({
   },
 
   selectedCardText: {
-    color: Colors.white, // White text for selected card
+    color: Colors.white,
     fontWeight: "bold",
   },
 

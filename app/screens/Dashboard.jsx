@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, RefreshControl, ProgressBarAndroid } from 'react-native';
 import { getAuth } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; // Import Firestore DB
-import Colors from '../../assets/colors'; // Import colors for styling
+import { db } from '../../firebaseConfig';
+import Colors from '../../assets/colors';
+import UserStats from '../components/UserStats';
+import WorkoutSummary from '../components/WorkoutSummary';
+import ProgressChart from '../components/ProgressChart';
+import ChallengesLB from '../components/ChallengesLB';
+import Notifications from '../components/Notifications';
 
 const Dashboard = () => {
   const [userData, setUserData] = useState(null);
@@ -52,14 +57,12 @@ const Dashboard = () => {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <Text style={styles.title}>Welcome to your Dashboard, {userData.name}!</Text>
       <View style={styles.infoContainer}>
-        <Text style={styles.info}>Height: {userData.height} cm</Text>
-        <Text style={styles.info}>Weight: {userData.weight} kg</Text>
-        <Text style={styles.info}>Goal: {userData.goal}</Text>
-        <Text style={styles.info}>
-          Target Weight: {userData.targetWeight || 'Not specified'} kg
-        </Text>
+        <UserStats userData={userData} />
+        <WorkoutSummary/>
+        <ProgressChart/>
+        <ChallengesLB/>
+        <Notifications/>
       </View>
     </ScrollView>
   );
@@ -80,9 +83,5 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     marginTop: 20,
-  },
-  info: {
-    fontSize: 18,
-    marginBottom: 10,
   },
 });
