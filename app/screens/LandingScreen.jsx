@@ -1,21 +1,31 @@
 // HomeScreen.js
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import Colors from '../../assets/colors';
-import bevoWorkout from '../../assets/images/bevoworkout.png'; // Adjust the path as necessary
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import Colors from "../../assets/colors";
+import bevoWorkout from "../../assets/images/bevoworkout.png"; // Adjust the path as necessary
+import { auth } from "../../firebaseConfig"; // Import auth correctly from firebaseConfig
 
 const LandingScreen = () => {
   const navigation = useNavigation();
-  
+
   // Mocking the logged-in state (replace this with actual auth state)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    // Here you would normally check if the user is logged in
-    // For example, using Firebase or AsyncStorage for persistent state
-    // setIsLoggedIn(true);  // Uncomment this line to simulate logged in state
-  }, []);
+    // Check if the user is already logged in when the app loads
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);  // User is logged out
+      }
+    });
+
+    // Clean up the subscription when the component unmounts
+    return () => unsubscribe();
+  }, [navigation]);
+
 
   return (
     <View style={styles.container}>
@@ -25,16 +35,13 @@ const LandingScreen = () => {
 
       {/* Image Section */}
       <View style={styles.imageContainer}>
-        <Image 
-          source={bevoWorkout}
-          style={styles.logo}
-        />
+        <Image source={bevoWorkout} style={styles.logo} />
       </View>
 
       {/* Login/Sign Up Buttons or Dashboard */}
       {isLoggedIn ? (
         <TouchableOpacity
-          onPress={() => navigation.navigate('Dashboard')}
+          onPress={() => navigation.navigate("Dashboard")}
           style={styles.button}
         >
           <Text style={styles.buttonText}>Go to Dashboard</Text>
@@ -42,14 +49,14 @@ const LandingScreen = () => {
       ) : (
         <>
           <TouchableOpacity
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => navigation.navigate("Login")}
             style={styles.button}
           >
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
-            onPress={() => navigation.navigate('SignUp')}
+            onPress={() => navigation.navigate("SignUp")}
             style={[styles.button, styles.signUpButton]}
           >
             <Text style={styles.buttonText}>Sign Up</Text>
@@ -65,8 +72,8 @@ export default LandingScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: Colors.primary,
     paddingHorizontal: 20,
     paddingTop: 50,
@@ -76,29 +83,29 @@ const styles = StyleSheet.create({
     height: 300,
     marginBottom: 40,
     backgroundColor: Colors.landing_page_logo,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 60,
-    padding: 20, 
+    padding: 20,
   },
   logo: {
-    width: '100%',
-    height: '110%',
-    resizeMode: 'contain',
+    width: "100%",
+    height: "110%",
+    resizeMode: "contain",
   },
   welcomeText: {
     fontSize: 36,
-    fontWeight: '700',  // Make it bold and prominent
-    color: Colors.dark_gray, 
+    fontWeight: "700", // Make it bold and prominent
+    color: Colors.dark_gray,
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: 2,
   },
   appNameText: {
-    fontSize: 40,  // Slightly larger for emphasis
-    fontWeight: '700',  // Bold and prominent
+    fontSize: 40, // Slightly larger for emphasis
+    fontWeight: "700", // Bold and prominent
     color: Colors.ut_burnt_orange,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 10,
     letterSpacing: 1.5,
   },
@@ -106,23 +113,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: Colors.dark_gray,
     marginBottom: 50,
-    textAlign: 'center',
-    fontStyle: 'italic',  // Subtle contrast with the title
+    textAlign: "center",
+    fontStyle: "italic", // Subtle contrast with the title
   },
   button: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     backgroundColor: Colors.ut_burnt_orange,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 15,
   },
   buttonText: {
     color: Colors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   signUpButton: {
-    backgroundColor: Colors.dark_gray, 
+    backgroundColor: Colors.dark_gray,
   },
 });

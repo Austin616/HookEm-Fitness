@@ -5,7 +5,9 @@ export class Dashboard extends Component {
   render() {
     return (
       <View>
-        <Text> This is the Dashboard screen </Text>
+        <Text style={{ fontSize: 18, textAlign: 'center', marginTop: 20 }}>
+          Welcome to your Dashboard!
+        </Text>
       </View>
     )
   }

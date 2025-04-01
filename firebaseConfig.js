@@ -1,11 +1,9 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { initializeAuth, getReactNativePersistence } from "firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { initializeApp } from 'firebase/app';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { isSupported, getAnalytics } from 'firebase/analytics';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCqrYPwgLf_Jnyqa9RNGNKgopvZ9K7fgSU",
   authDomain: "gym-app-76a84.firebaseapp.com",
@@ -16,11 +14,15 @@ const firebaseConfig = {
   measurementId: "G-SSQKWR5RSD"
 };
 
-// Initialize Firebase
+// Initialize Firebase (only once)
 const app = initializeApp(firebaseConfig);
 const auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage), // Use AsyncStorage for persistence
 });
-const analytics = getAnalytics(app);
 
-export { app, analytics, auth };
+// Optionally initialize Analytics (if supported)
+if (isSupported()) {
+  const analytics = getAnalytics(app);
+}
+
+export { app, auth };

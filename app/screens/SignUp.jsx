@@ -1,32 +1,53 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, TextInput } from 'react-native';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // Firebase Auth imports
 import Colors from '../../assets/colors'; // Adjust the path as necessary
-import googleIcon from '../../assets/images/googleIcon.webp'; // Adjust the path as necessary
 
 const SignUp = () => {
-  useEffect(() => {
-    
-  }, []);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const signUpWithGoogle = async () => {
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      Alert.alert('Please fill in both fields');
+      return;
+    }
+
     try {
-      Alert.alert('Google Sign-Up Button Pressed');
+      const auth = getAuth(); // Initialize Firebase Auth
+      await createUserWithEmailAndPassword(auth, email, password); // Sign up user with email and password
+      Alert.alert('Sign Up Successful', `Welcome ${email}!`);
+      // Optionally, navigate to the login page or dashboard after sign-up
+      // navigation.navigate('Login'); // Uncomment if you are using react-navigation
     } catch (error) {
       console.error(error);
-      Alert.alert('Failed to sign up with Google', error.message);
+      Alert.alert('Failed to sign up', error.message); // Show the error message if signup fails
     }
   };
 
   return (
     <View style={styles.container}>
-        <Text style={styles.title}>Join Us!</Text>
-        <Text style={styles.subtitle}>Create an account to get started</Text>
-      
-      <TouchableOpacity onPress={signUpWithGoogle} style={styles.googleButton}>
-        <View style={styles.buttonContent}>
-          <Image source={googleIcon} style={styles.googleIcon} />
-          <Text style={styles.buttonText}>Sign Up with Google</Text>
-        </View>
+      <Text style={styles.title}>Join Us!</Text>
+      <Text style={styles.subtitle}>Create an account to get started</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <TouchableOpacity onPress={handleSignUp} style={styles.signUpButton}>
+        <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
     </View>
   );
@@ -57,7 +78,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  googleButton: {
+  input: {
+    width: '100%',
+    padding: 12,
+    marginBottom: 20,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: Colors.dark_gray,
+    backgroundColor: Colors.white,
+    fontSize: 16,
+  },
+  signUpButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     backgroundColor: Colors.ut_burnt_orange,
@@ -69,17 +100,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 5,
     elevation: 5, // For Android
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  googleIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-    backgroundColor: Colors.white,
-    borderRadius: 12,
   },
   buttonText: {
     color: Colors.white,
