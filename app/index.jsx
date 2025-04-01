@@ -12,12 +12,14 @@ import SignOut from "./components/SignOut"; // Import the SignOut utility
 const Stack = createNativeStackNavigator();
 
 export default function Index() {
+
   return (
     <Stack.Navigator
       initialRouteName="Landing"
       screenOptions={{
         headerShown: true,
-        header: ({ navigation }) => <CustomHeader navigation={navigation} />, // Pass navigation here
+        // Set default options for all screens
+        header: ({ navigation }) => <CustomHeader showBackButton={true} showSettingsButton={false} />,
       }}
     >
       <Stack.Screen
@@ -32,12 +34,13 @@ export default function Index() {
               onSignOut={() => handleSignOut(navigation)} // Pass handleSignOut to CustomHeader
             />
           ),
+          gestureEnabled: false, // Disable swipe gesture on the Dashboard screen
         }}
       />
       <Stack.Screen
         name="Landing"
         component={LandingScreen}
-        options={{ headerShown: false }}
+        options={{ headerShown: false, gestureEnabled: false }} // Disable swipe gesture on Landing screen
       />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="SignUp" component={SignUp} />
@@ -52,6 +55,7 @@ export default function Index() {
               showSettingsButton={false}
             />
           ),
+          gestureEnabled: true, // Enable swipe gesture for Settings (back arrow shown)
         })}
       >
         {(props) => {

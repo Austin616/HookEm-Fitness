@@ -89,12 +89,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: Colors.white, // Use your theme color
+    backgroundColor: Colors.primary, // Use your theme color
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontSize: 36,
+    fontWeight: '700',
+    color: Colors.ut_burnt_orange,
+    marginBottom: 12,
+    textAlign: 'center',
+    letterSpacing: 2
   },
   subtitle: {
     fontSize: 16,
@@ -110,7 +113,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   signUpButton: {
-    backgroundColor: Colors.primary, // Use your theme color
+    backgroundColor: Colors.ut_burnt_orange, // Use your theme color
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 5,

@@ -1,27 +1,37 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { doc, setDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { db } from '../../firebaseConfig'; // Ensure correct path to firebaseConfig
-import Colors from '../../assets/colors'; // Import colors for styling
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { doc, setDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { db } from "../../firebaseConfig"; // Ensure correct path to firebaseConfig
+import Colors from "../../assets/colors"; // Import colors for styling
 
 const Tutorial = ({ navigation }) => {
   const [step, setStep] = useState(1);
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
-  const [goal, setGoal] = useState('buildMuscle');  // Set default goal
-  const [targetWeight, setTargetWeight] = useState('');
+  const [heightFeet, setHeightFeet] = useState("5"); // Default height feet value
+  const [heightInches, setHeightInches] = useState("0"); // Default height inches value
+  const [weight, setWeight] = useState("");
+  const [goal, setGoal] = useState("buildMuscle"); // Set default goal
+  const [targetWeight, setTargetWeight] = useState("");
 
   const handleNextStep = () => {
-    if (step === 1 && !height) {
-      alert('Please enter your height');
+    if (step === 1 && (!heightFeet || !heightInches)) {
+      alert("Please enter your height");
       return;
     } else if (step === 2 && !weight) {
-      alert('Please enter your weight');
+      alert("Please enter your weight");
       return;
     } else if (step === 3 && !goal) {
-      alert('Please select a fitness goal');
+      alert("Please select a fitness goal");
       return;
     }
 
@@ -31,22 +41,22 @@ const Tutorial = ({ navigation }) => {
   const handleFinish = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
-  
+
     if (user) {
       try {
         await setDoc(
-          doc(db, 'users', user.uid),
+          doc(db, "users", user.uid),
           {
-            height,
+            height: `${heightFeet}ft ${heightInches}in`,
             weight,
             goal,
             targetWeight,
           },
           { merge: true } // ✅ This merges data instead of replacing it
         );
-        navigation.navigate('Dashboard');
+        navigation.navigate("Dashboard");
       } catch (error) {
-        console.error('Error saving data:', error);
+        console.error("Error saving data:", error);
       }
     }
   };
@@ -56,13 +66,27 @@ const Tutorial = ({ navigation }) => {
       {step === 1 && (
         <View style={styles.section}>
           <Text style={styles.title}>Enter Your Height</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your height in cm"
-            value={height}
-            onChangeText={setHeight}
-            keyboardType="numeric"
-          />
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={heightFeet}
+              onValueChange={(itemValue) => setHeightFeet(itemValue)}
+              style={styles.picker}
+            >
+              {[...Array(10).keys()].map((i) => (
+                <Picker.Item key={i} label={`${i + 4} ft`} value={`${i + 4}`} />
+              ))}
+            </Picker>
+
+            <Picker
+              selectedValue={heightInches}
+              onValueChange={(itemValue) => setHeightInches(itemValue)}
+              style={styles.picker}
+            >
+              {[...Array(12).keys()].map((i) => (
+                <Picker.Item key={i} label={`${i} in`} value={`${i}`} />
+              ))}
+            </Picker>
+          </View>
         </View>
       )}
 
@@ -82,14 +106,58 @@ const Tutorial = ({ navigation }) => {
       {step === 3 && (
         <View style={styles.section}>
           <Text style={styles.title}>Choose Your Fitness Goal</Text>
-            <Picker
-              selectedValue={goal}
-              onValueChange={(itemValue) => setGoal(itemValue)}
+          <ScrollView
+            contentContainerStyle={styles.cardContainer}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+          >
+            <TouchableOpacity
+              style={[
+                styles.card,
+                goal === "buildMuscle" && styles.selectedCard,
+              ]}
+              onPress={() => setGoal("buildMuscle")}
             >
-              <Picker.Item label="Build Muscle" value="buildMuscle" />
-              <Picker.Item label="Lose Weight" value="loseWeight" />
-              <Picker.Item label="Maintain Weight" value="maintainWeight" />
-            </Picker>
+              <Text
+                style={[
+                  styles.cardText,
+                  goal === "buildMuscle" && styles.selectedCardText,
+                ]}
+              >Build Muscle</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.card,
+                goal === "loseWeight" && styles.selectedCard,
+              ]}
+              onPress={() => setGoal("loseWeight")}
+            >
+             <Text
+                style={[
+                  styles.cardText,
+                  goal === "loseWeight" && styles.selectedCardText,
+                ]}
+              >Lose Weight</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.card,
+                goal === "maintainWeight" && styles.selectedCard,
+              ]}
+              onPress={() => setGoal("maintainWeight")}
+            >
+              <Text
+                style={[
+                  styles.cardText,
+                  goal === "maintainWeight" && styles.selectedCardText,
+                ]}
+              >
+                Maintain Weight
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       )}
 
@@ -108,9 +176,17 @@ const Tutorial = ({ navigation }) => {
 
       <View style={styles.buttonContainer}>
         {step < 4 ? (
-          <Button title="Next" onPress={handleNextStep} color={Colors.ut_burnt_orange} />
+          <Button
+            title="Next"
+            onPress={handleNextStep}
+            color={Colors.ut_burnt_orange}
+          />
         ) : (
-          <Button title="Finish" onPress={handleFinish} color={Colors.ut_burnt_orange} />
+          <Button
+            title="Finish"
+            onPress={handleFinish}
+            color={Colors.ut_burnt_orange}
+          />
         )}
       </View>
     </View>
@@ -122,27 +198,38 @@ export default Tutorial;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
     backgroundColor: Colors.primary, // Using primary background color
   },
 
   section: {
-    width: '100%',
+    width: "100%",
     marginBottom: 20,
   },
 
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
     color: Colors.dark_gray, // Dark gray for title text
   },
 
+  pickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+
+  picker: {
+    width: 120,
+    height: 180,
+  },
+
   input: {
-    width: '100%',
+    width: "100%",
     padding: 12,
     borderRadius: 5,
     borderWidth: 1,
@@ -151,8 +238,44 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
+  cardContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    width: "100%",
+  },
+
+  card: {
+    width: 100,
+    height: 100,
+    backgroundColor: Colors.white,
+    borderRadius: 10,
+    marginHorizontal: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: Colors.dark_gray,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+
+  selectedCard: {
+    backgroundColor: Colors.ut_burnt_orange,
+  },
+
+  selectedCardText: {
+    color: Colors.white, // White text for selected card
+    fontWeight: "bold",
+  },
+
+  cardText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.dark_gray,
+  },
+
   buttonContainer: {
-    width: '100%',
+    width: "100%",
     marginTop: 20,
   },
 });
