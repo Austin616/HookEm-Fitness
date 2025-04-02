@@ -4,6 +4,9 @@ const Colors = {
     dark_gray: '#333',
     white: '#fff',
     landing_page_logo: '#c86012',
+    light_gray: '#e0e0e0',
+    gray: '#888',
+    light_green: '#a8d5ba',
   };
   
   export default Colors;

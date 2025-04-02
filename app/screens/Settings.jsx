@@ -27,15 +27,16 @@ function Settings({ onSignOut, userId }) {
   // Editable fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [isHeightPickerVisible, setIsHeightPickerVisible] = useState(false);
   const [heightFeet, setHeightFeet] = useState("5");
   const [heightInches, setHeightInches] = useState("0");
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
+  const [isHeightPickerVisible, setIsHeightPickerVisible] = useState(false);
   const [isWeightPickerVisible, setIsWeightPickerVisible] = useState(false);
-  const[isGoalPickerVisible, setIsGoalPickerVisible] = useState(false);
-  const [isTargetWeightPickerVisible, setIsTargetWeightPickerVisible] = useState(false);
+  const [isGoalPickerVisible, setIsGoalPickerVisible] = useState(false);
+  const [isTargetWeightPickerVisible, setIsTargetWeightPickerVisible] =
+    useState(false);
 
   useEffect(() => {
     const getPermission = async () => {
@@ -337,9 +338,7 @@ function Settings({ onSignOut, userId }) {
               ))}
             </Picker>
           </View>
-        )
-
-        }
+        )}
         {isTargetWeightPickerVisible && (
           <TouchableOpacity
             style={styles.doneButton}
@@ -459,7 +458,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
     width: "25%",
     alignSelf: "center",
-    padding: 5
+    padding: 5,
   },
   doneButtonText: {
     fontSize: 16,

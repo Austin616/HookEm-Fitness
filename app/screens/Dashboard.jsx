@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, ScrollView, RefreshControl, ProgressBarAndroid } from 'react-native';
-import { getAuth } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
-import Colors from '../../assets/colors';
-import UserStats from '../components/UserStats';
-import WorkoutSummary from '../components/WorkoutSummary';
-import ProgressChart from '../components/ProgressChart';
-import ChallengesLB from '../components/ChallengesLB';
-import Notifications from '../components/Notifications';
+import React, { useState, useEffect } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
+import { getAuth } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
+import Colors from "../../assets/colors";
+import UserStats from "../components/UserStats";
+import WorkoutSummary from "../components/WorkoutSummary";
+import ProgressChart from "../components/ProgressChart";
+import ChallengesLB from "../components/ChallengesLB";
+import Notifications from "../components/Notifications";
 
 const Dashboard = () => {
   const [userData, setUserData] = useState(null);
@@ -20,17 +26,17 @@ const Dashboard = () => {
   const fetchUserData = async () => {
     try {
       if (user) {
-        const docRef = doc(db, 'users', user.uid);
+        const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           setUserData(docSnap.data());
         } else {
-          console.log('No data found');
+          console.log("No data found");
         }
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error("Error fetching user data:", error);
     }
   };
 
@@ -52,19 +58,46 @@ const Dashboard = () => {
     );
   }
 
+  // Get the current hour
+  const currentHour = new Date().getHours();
+
+  // Determine the greeting message based on the time of day
+  let greetingMessage = "";
+  let emoji = "";
+  if (currentHour >= 5 && currentHour < 12) {
+    greetingMessage = "Good Morning!";
+    emoji = "🌞";
+  } else if (currentHour >= 18) {
+    greetingMessage = "Good Night!";
+    emoji = "🌙";
+  } else {
+    greetingMessage = "Keep up the good work, legend!";
+    emoji = "💪";
+  }
+
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View style={styles.infoContainer}>
-        <UserStats userData={userData} />
-        <WorkoutSummary/>
-        <ProgressChart/>
-        <ChallengesLB/>
-        <Notifications/>
-      </View>
-    </ScrollView>
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <Text style={styles.title}>
+          {greetingMessage} {emoji}
+        </Text>
+        <Text style={styles.subtitle}>
+          You're doing great today! Keep Strong 💪
+        </Text>
+        <View style={styles.infoContainer}>
+          <UserStats userData={userData} />
+          <WorkoutSummary />
+          <ProgressChart />
+          <ChallengesLB />
+          <Notifications />
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -76,12 +109,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     padding: 16,
   },
+  scrollView: {
+    flex: 1,
+  },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontWeight: "bold",
+    color: Colors.dark_gray,
+    marginBottom: 8,
   },
-  infoContainer: {
-    marginTop: 20,
+  subtitle: {
+    fontSize: 10,
+    color: "#000",
+    marginBottom: 16,
+    fontWeight: "400",
+    fontStyle: "italic",
   },
+  
 });

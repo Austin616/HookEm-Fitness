@@ -8,14 +8,14 @@ import {
 import Colors from "../../assets/colors";
 import arrowIcon from "../../assets/images/backIcon.png";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import Settings from "../../assets/images/setting.png"; // Import settings icon if needed
+import Settings from "../../assets/images/setting.png";
+import logo from "../../assets/images/app_logo.png"; // Assuming you have a logo image
 
 const CustomHeader = ({ showBackButton, showSettingsButton }) => {
   const navigation = useNavigation();
-  const route = useRoute(); // Get the current route
+  const route = useRoute(); 
 
-  // Determine the title based on the current route
-  const title = route.name === "Dashboard" ? "Welcome Back!" : "";
+  const title = route.name === "Dashboard" ? "Hook'Em Fitness" : "";
 
   return (
     <SafeAreaView style={{ backgroundColor: Colors.primary }}>
@@ -33,22 +33,32 @@ const CustomHeader = ({ showBackButton, showSettingsButton }) => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
               source={arrowIcon}
-              style={{ width: 24, height: 24, tintColor: Colors.ut_burnt_orange }} // Use your theme color
+              style={{ width: 24, height: 24, tintColor: Colors.ut_burnt_orange }} 
             />
           </TouchableOpacity>
         )}
 
         {/* Title */}
-        <Text style={{ color: Colors.ut_burnt_orange, fontSize: 18, fontWeight: "bold" }}>
-          {title}
-        </Text>
+          <Image
+          source={logo}
+          style={{
+            width: 40, // Adjusted logo width
+            height: 30, // Adjusted logo height
+            marginLeft: 8,
+            marginRight: 8,
+            tintColor: Colors.white,
+            backgroundColor: Colors.ut_burnt_orange,
+            borderRadius: 8, // Slight rounding for the background
+            padding: 4, // Padding inside the logo background
+          }}
+        />
 
         {/* Settings Button (Conditionally render based on showSettingsButton prop) */}
         {showSettingsButton && (
           <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
             <Image
               source={Settings}
-              style={{ width: 24, height: 24, tintColor: Colors.ut_burnt_orange }} // Use your theme color
+              style={{ width: 24, height: 24, tintColor: Colors.ut_burnt_orange }}
             />
           </TouchableOpacity>
         )}
