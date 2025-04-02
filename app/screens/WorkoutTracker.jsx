@@ -1,74 +1,111 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native'
-import { getAuth } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '../../firebaseConfig'
-import Colors from '../../assets/colors'
-import { useState, useEffect } from 'react'
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView, FlatList } from "react-native";
+import { Calendar } from "react-native-calendars"; // Import the calendar
+import useFetchWorkout from "../components/Workout/fetchWorkout"; // Adjust the import path
+import WorkoutModal from "../components/Workout/WorkoutModel"; // Adjust the import path
+import WorkoutList from "../components/Workout/WorkoutList"; // Adjust the import path
+import Colors from "../../assets/colors"; // Adjust the import path
 
+const WorkoutTracker = ({ navigation }) => {
+  const { userData, existingWorkouts, workoutDates, handleCreateWorkout, handleDeleteWorkout } = useFetchWorkout();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
-const WorkoutTracker = () => {
-    const [userData, setUserData] = useState(null)
-    const auth = getAuth()
-    const user = auth.currentUser
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                if (user) {
-                    const docRef = doc(db, 'users', user.uid)
-                    const docSnap = await getDoc(docRef)
-
-                    if (docSnap.exists()) {
-                        setUserData(docSnap.data())
-                    } else {
-                        console.log('No data found')
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error)
-            }
-        }
-
-        fetchUserData()
-    }, [user])
-
-    return (
-        <View style={styles.container}>
-            <ScrollView
-                style={styles.scrollView}
-                refreshControl={<RefreshControl refreshing={false} onRefresh={() => {}} />}
-            >
-                <Text style={styles.title}>Workout Tracker</Text>
-                {userData ? (
-                    <Text style={styles.userInfo}>Welcome, {userData.name}</Text>
-                ) : (
-                    <Text style={styles.userInfo}>Loading user data...</Text>
-                )}
-            </ScrollView>
-        </View>
-    )
+  const handleWorkoutCreation = (workoutName) => {
+    if (!selectedDate) {
+      alert("Please select a date first");
+      return;
+    }
   
-}
+    // Check if the selected date already has a workout
+    const existingWorkout = existingWorkouts.find(workout => workout.date === selectedDate);
+  
+   
+  
+    if (existingWorkout) {
+      console.log('Existing Workout Found:', existingWorkout); // Debug: Log the found workout
+      // If a workout already exists, navigate to the workout detail page
+      navigation.navigate("WorkoutDetail", {
+        workoutName: existingWorkout.name,
+        workoutDate: selectedDate,
+      });
+    } else {
+      console.log('No existing workout found. Creating new one.');
+      // If no workout exists, create a new one
+      handleCreateWorkout(workoutName, selectedDate, navigation);
+      setModalVisible(false); // Close the modal after creation
+    }
+  };
+  
+  const onDayPress = (day) => {
+    console.log('Day pressed:', day); // Debug: Check the pressed day
+    if (workoutDates[day.dateString]) {
+        // If the date is already marked, navigate to the workout detail page
+        const existingWorkout = existingWorkouts.find(workout => workout.date === day.dateString);
+        if (existingWorkout) {
+            navigation.navigate("WorkoutDetail", {
+                workoutName: existingWorkout.name,
+                workoutDate: day.dateString,
+            });
+        }
+      return;
+    }
+    setSelectedDate(day.dateString); // Store the selected date
+    setModalVisible(true); // Open the modal to add workout
+  };
+  
 
-export default WorkoutTracker
+  return (
+    <ScrollView style={{ flex: 1 }}>
+    <View style={styles.container}>
+        <Text style={styles.title}>Workout Tracker</Text>
+        {userData && (
+            <Text style={styles.userInfo}>
+            Welcome, {userData.name}! Your email is {userData.email}.
+            </Text>
+        )}
+        <Calendar
+            onDayPress={onDayPress}
+            markedDates={workoutDates} // Pass the marked dates to the calendar
+            theme={{
+            todayTextColor: Colors.primary,
+            selectedDayBackgroundColor: Colors.secondary,
+            arrowColor: Colors.primary,
+            }}
+        />
+        <WorkoutModal
+            isVisible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            onCreateWorkout={handleWorkoutCreation}
+        />
+        <WorkoutList
+            workouts={existingWorkouts}
+            navigation={navigation}
+            onDeleteWorkout={handleDeleteWorkout}
+        />
+    </View>
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.white,
-        padding: 20,
-    },
-    scrollView: {
-        marginHorizontal: 20,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: Colors.ut_burnt_orange,
-        marginBottom: 20,
-    },
-    userInfo: {
-        fontSize: 18,
-        color: Colors.dark_gray,
-    },
-})
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: Colors.primary,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  userInfo: {
+    fontSize: 18,
+    color: "#555",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+});
+
+export default WorkoutTracker;
