@@ -13,23 +13,26 @@ import { useLocalSearchParams } from "expo-router";
 import CustomHeader from "../components/CustomHeader";
 import Colors from "../../assets/colors";
 import closeIcon from "../../assets/images/close.png";
+import useFetchWorkout from "./fetchWorkout";
 
 const MuscleGroupDetail = () => {
-  const { muscleGroup } = useLocalSearchParams();
+  const { muscleGroup, workoutName, workoutDate } = useLocalSearchParams();
   const [exercises, setExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const { addExerciseToWorkout } = useFetchWorkout();
 
   // Filter states
   const [forceFilter, setForceFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [mechanicFilter, setMechanicFilter] = useState("");
   const [equipmentFilter, setEquipmentFilter] = useState("");
-
   const [isModalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     console.log("Muscle Group:", muscleGroup);
+    console.log("Workout Name:", workoutName);
+    console.log("Workout Date:", workoutDate);
 
     const fetchExercises = async () => {
       try {
@@ -52,7 +55,7 @@ const MuscleGroupDetail = () => {
     };
 
     fetchExercises();
-  }, [muscleGroup]);
+  }, [muscleGroup, workoutName, workoutDate]);
 
   useEffect(() => {
     let filtered = exercises;
@@ -98,6 +101,11 @@ const MuscleGroupDetail = () => {
 
   const applyFilters = () => {
     setModalVisible(false);
+  };
+
+  const handleAddExercise = (exercise) => {
+    const workoutId = `${workoutName}-${workoutDate}`;
+    addExerciseToWorkout(workoutId, exercise);
   };
 
   return (
@@ -392,7 +400,7 @@ const MuscleGroupDetail = () => {
             <TouchableOpacity
               key={index}
               style={styles.exerciseRow}
-              onPress={() => console.log(`Clicked on ${exercise.name}`)}
+              onPress={() => handleAddExercise(exercise)}
             >
               <Text style={styles.exerciseName}>{exercise.name}</Text>
             </TouchableOpacity>
@@ -445,18 +453,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   modal: {
-    justifyContent: "center", // Centers the modal vertically
-    alignItems: "center", // Centers horizontally
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContentContainer: {
     backgroundColor: Colors.white,
     padding: 20,
     borderRadius: 10,
-    maxHeight: "80%", // Ensures the modal doesn't exceed screen height
-    width: "90%", // You can adjust the width to make it look better
+    maxHeight: "80%",
+    width: "90%",
   },
   modalContent: {
-    paddingBottom: 20, // Optional: Add some padding to the bottom
+    paddingBottom: 20,
   },
   filterTitle: {
     fontSize: 18,

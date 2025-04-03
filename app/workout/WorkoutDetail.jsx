@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Text, View, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
 import CustomHeader from "../components/CustomHeader";
 import Colors from "../../assets/colors";
 import WorkoutCard from "./workoutCard";
-import Exercises from "./excercises";
+import useFetchWorkout from "./fetchWorkout";
+import { useFocusEffect } from "expo-router";
 
 const WorkoutDetail = () => {
   const router = useRouter();
   const { workoutName, workoutDate } = useLocalSearchParams();
   const [uniqueMuscleGroups, setUniqueMuscleGroups] = useState([]);
+  const [exercises, setExercises] = useState([]); // State to store exercises
+  const { fetchExerciseFromWorkout } = useFetchWorkout();
 
   const FetchMuscleGroups = async () => {
     try {
@@ -32,15 +35,30 @@ const WorkoutDetail = () => {
     }
   };
 
-  useEffect(() => {
-    FetchMuscleGroups();
-  }, []);
+  // Fetch exercises for a specific workout based on workoutName
+  const fetchExercises = async () => {
+    if (workoutName && workoutDate) {
+      const exercisesForWorkout = await fetchExerciseFromWorkout(
+        workoutName,
+        workoutDate
+      ); 
+      setExercises(exercisesForWorkout);
+    }
+  };
 
-  useEffect(() => {
-    console.log("Workout Name:", workoutName);
-    console.log("Workout Date:", workoutDate);
-    console.log("Workout Details Loaded");
-  }, [workoutName, workoutDate]);
+  // Fetch muscle groups and exercises when the component is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      FetchMuscleGroups();
+      fetchExercises();
+    }, [])
+  );
+
+  const handleNavigateToMuscleGroup = (muscleGroup) => {
+    router.push(
+      `/workout/${muscleGroup}?workoutName=${workoutName}&workoutDate=${workoutDate}`
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -52,8 +70,19 @@ const WorkoutDetail = () => {
           {workoutName.charAt(0).toUpperCase() + workoutName.slice(1)} on{" "}
           {new Date(workoutDate).toLocaleDateString()}{" "}
         </Text>
-        <Exercises />
 
+        {/* display exercises fetched */}
+        <Text style={styles.workoutName}>
+          {exercises.length > 0 ? "Exercises:" : "No exercises found."}
+        </Text>
+
+        {exercises.map((exercise, index) => (
+          <Text key={index} style={styles.workoutName}>
+            {exercise.name}
+          </Text>
+        ))}
+
+        <View style={{ height: 16 }}></View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
@@ -62,7 +91,7 @@ const WorkoutDetail = () => {
             <View key={index} style={styles.cardWrapper}>
               <WorkoutCard
                 muscleGroup={muscleGroup}
-                onPress={() => router.push(`/workout/${muscleGroup}`)}
+                onPress={() => handleNavigateToMuscleGroup(muscleGroup)}
               />
             </View>
           ))}
