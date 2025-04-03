@@ -11,18 +11,21 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
-import { storage, db } from "../../firebaseConfig";
+import { storage, db } from "../firebaseConfig";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import Colors from "../../assets/colors";
-import profileIcon from "../../assets/images/profile-icon.png";
-import { useNavigation } from "@react-navigation/native";
+import Colors from "../assets/colors";
+import profileIcon from "../assets/images/profile-icon.png";
+import { useRouter } from "expo-router";
+import { useUser } from "./UserContext";
+import CustomHeader from "./components/CustomHeader";
 
-function Settings({ onSignOut, userId }) {
+function Settings() {
   const [profilePicture, setProfilePicture] = useState(profileIcon);
   const [newProfilePicture, setNewProfilePicture] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
-  const navigation = useNavigation();
+  const router = useRouter();
+  const { userId: contextUserId, onSignOut } = useUser(); // Access userId from context
 
   // Editable fields
   const [name, setName] = useState("");
@@ -32,11 +35,7 @@ function Settings({ onSignOut, userId }) {
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
-  const [isHeightPickerVisible, setIsHeightPickerVisible] = useState(false);
-  const [isWeightPickerVisible, setIsWeightPickerVisible] = useState(false);
-  const [isGoalPickerVisible, setIsGoalPickerVisible] = useState(false);
-  const [isTargetWeightPickerVisible, setIsTargetWeightPickerVisible] =
-    useState(false);
+  const [activePicker, setActivePicker] = useState(null); // Track the active picker
 
   useEffect(() => {
     const getPermission = async () => {
@@ -50,7 +49,7 @@ function Settings({ onSignOut, userId }) {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const userDocRef = doc(db, "users", userId);
+        const userDocRef = doc(db, "users", contextUserId); // use contextUserId here
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
@@ -72,10 +71,10 @@ function Settings({ onSignOut, userId }) {
       }
     };
 
-    if (userId) {
+    if (contextUserId) {
       fetchProfileData();
     }
-  }, [userId]);
+  }, [contextUserId]);
 
   const handleChangeProfilePicture = async () => {
     if (!hasPermission) {
@@ -105,7 +104,7 @@ function Settings({ onSignOut, userId }) {
     try {
       const response = await fetch(newProfilePicture);
       const blob = await response.blob();
-      const storageRef = ref(storage, `profilePictures/${userId}.jpg`);
+      const storageRef = ref(storage, `profilePictures/${contextUserId}.jpg`);
       const uploadTask = uploadBytesResumable(storageRef, blob);
 
       return new Promise((resolve, reject) => {
@@ -134,7 +133,7 @@ function Settings({ onSignOut, userId }) {
 
   const handleSaveChanges = async () => {
     try {
-      const userDocRef = doc(db, "users", userId);
+      const userDocRef = doc(db, "users", contextUserId); // use contextUserId here
       let profileImageUrl = profilePicture.uri;
 
       if (newProfilePicture) {
@@ -155,30 +154,31 @@ function Settings({ onSignOut, userId }) {
       await updateDoc(userDocRef, updatedProfileData);
       setNewProfilePicture(null);
       Alert.alert("Success", "Profile updated successfully!");
-      navigation.navigate("Dashboard");
+      router.push("/dashboard"); // Adjust the navigation after update
     } catch (error) {
       console.error("Error updating profile:", error);
       Alert.alert("Error", "There was an error updating your profile.");
     }
   };
 
+  const handlePickerPress = (picker) => {
+    // If the picker is already active, close it, otherwise open it
+    setActivePicker(activePicker === picker ? null : picker);
+  };
+
   return (
     <ScrollView style={styles.container}>
+      <CustomHeader showBackButton/>
       <TouchableOpacity onPress={handleChangeProfilePicture}>
         <Image
-          source={
-            newProfilePicture ? { uri: newProfilePicture } : profilePicture
-          }
+          source={newProfilePicture ? { uri: newProfilePicture } : profilePicture}
           style={styles.profileImage}
         />
       </TouchableOpacity>
 
       <Text style={styles.title}>Settings</Text>
 
-      {[
-        { label: "Name", value: name, setter: setName },
-        { label: "Email", value: email, setter: setEmail },
-      ].map((field, index) => (
+      {[{ label: "Name", value: name, setter: setName }, { label: "Email", value: email, setter: setEmail }].map((field, index) => (
         <View key={index} style={styles.settingsSection}>
           <Text style={styles.settingLabel}>{field.label}</Text>
           <TextInput
@@ -189,19 +189,18 @@ function Settings({ onSignOut, userId }) {
           />
         </View>
       ))}
-
+      
       {/* Height */}
       <View style={styles.settingsSection}>
         <Text style={styles.settingLabel}>Height</Text>
-        {!isHeightPickerVisible ? (
-          <TouchableOpacity onPress={() => setIsHeightPickerVisible(true)}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputText}>
-                {heightFeet} ft {heightInches} in
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
+        <TouchableOpacity onPress={() => handlePickerPress('height')}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputText}>
+              {heightFeet} ft {heightInches} in
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {activePicker === 'height' && (
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={heightFeet}
@@ -212,7 +211,6 @@ function Settings({ onSignOut, userId }) {
                 <Picker.Item key={i} label={`${i + 3} ft`} value={`${i + 3}`} />
               ))}
             </Picker>
-
             <Picker
               selectedValue={heightInches}
               onValueChange={(itemValue) => setHeightInches(itemValue)}
@@ -225,11 +223,8 @@ function Settings({ onSignOut, userId }) {
           </View>
         )}
 
-        {isHeightPickerVisible && (
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => setIsHeightPickerVisible(false)}
-          >
+        {activePicker === 'height' && (
+          <TouchableOpacity style={styles.doneButton} onPress={() => setActivePicker(null)}>
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
         )}
@@ -238,15 +233,14 @@ function Settings({ onSignOut, userId }) {
       {/* Weight */}
       <View style={styles.settingsSection}>
         <Text style={styles.settingLabel}>Weight</Text>
-        {!isWeightPickerVisible ? (
-          <TouchableOpacity onPress={() => setIsWeightPickerVisible(true)}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputText}>
-                {weight ? `${weight} lbs` : "Select your weight"}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
+        <TouchableOpacity onPress={() => handlePickerPress('weight')}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputText}>
+              {weight ? `${weight} lbs` : "Select your weight"}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {activePicker === 'weight' && (
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={weight}
@@ -254,38 +248,31 @@ function Settings({ onSignOut, userId }) {
               style={styles.picker}
             >
               {[...Array(300).keys()].map((i) => (
-                <Picker.Item
-                  key={i}
-                  label={`${i + 1} lbs`}
-                  value={`${i + 1}`}
-                />
+                <Picker.Item key={i} label={`${i + 1} lbs`} value={`${i + 1}`} />
               ))}
             </Picker>
           </View>
         )}
 
-        {isWeightPickerVisible && (
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => setIsWeightPickerVisible(false)}
-          >
+        {activePicker === 'weight' && (
+          <TouchableOpacity style={styles.doneButton} onPress={() => setActivePicker(null)}>
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
         )}
+
       </View>
 
       {/* Goal */}
       <View style={styles.settingsSection}>
         <Text style={styles.settingLabel}>Goal</Text>
-        {!isGoalPickerVisible ? (
-          <TouchableOpacity onPress={() => setIsGoalPickerVisible(true)}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputText}>
-                {goal ? goal : "Select your goal"}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
+        <TouchableOpacity onPress={() => handlePickerPress('goal')}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputText}>
+              {goal ? goal : "Select your goal"}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {activePicker === 'goal' && (
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={goal}
@@ -299,11 +286,8 @@ function Settings({ onSignOut, userId }) {
           </View>
         )}
 
-        {isGoalPickerVisible && (
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => setIsGoalPickerVisible(false)}
-          >
+        {activePicker === 'goal' && (
+          <TouchableOpacity style={styles.doneButton} onPress={() => setActivePicker(null)}>
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
         )}
@@ -312,17 +296,14 @@ function Settings({ onSignOut, userId }) {
       {/* Target Weight */}
       <View style={styles.settingsSection}>
         <Text style={styles.settingLabel}>Target Weight</Text>
-        {!isTargetWeightPickerVisible ? (
-          <TouchableOpacity
-            onPress={() => setIsTargetWeightPickerVisible(true)}
-          >
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputText}>
-                {targetWeight ? `${targetWeight} lbs` : "Select target weight"}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
+        <TouchableOpacity onPress={() => handlePickerPress('targetWeight')}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputText}>
+              {targetWeight ? `${targetWeight} lbs` : "Select target weight"}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {activePicker === 'targetWeight' && (
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={targetWeight}
@@ -330,23 +311,19 @@ function Settings({ onSignOut, userId }) {
               style={styles.picker}
             >
               {[...Array(300).keys()].map((i) => (
-                <Picker.Item
-                  key={i}
-                  label={`${i + 1} lbs`}
-                  value={`${i + 1}`}
-                />
+                <Picker.Item key={i} label={`${i + 1} lbs`} value={`${i + 1}`} />
               ))}
             </Picker>
           </View>
         )}
-        {isTargetWeightPickerVisible && (
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => setIsTargetWeightPickerVisible(false)}
-          >
+
+        {activePicker === 'targetWeight' && (
+          <TouchableOpacity style={styles.doneButton} onPress={() => setActivePicker(null)}>
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
         )}
+
+
       </View>
 
       <TouchableOpacity
@@ -366,6 +343,7 @@ function Settings({ onSignOut, userId }) {
 export default Settings;
 
 const styles = StyleSheet.create({
+  // Define your styles here
   container: {
     flex: 1,
     backgroundColor: Colors.primary,
@@ -442,28 +420,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.dark_gray,
   },
-  pickerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  picker: {
-    flex: 1,
-    height: 200,
-  },
   doneButton: {
     backgroundColor: Colors.ut_burnt_orange,
+    paddingVertical: 8,
     borderRadius: 8,
-    marginTop: 15,
-    width: "25%",
+    marginTop: 10,
+    width: "50%",
     alignSelf: "center",
-    padding: 5,
   },
   doneButtonText: {
     fontSize: 16,
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
+  },
+  pickerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",  // Center the pickers horizontally
+    alignItems: "center",      // Align the pickers vertically
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  picker: {
+    width: "45%",  // Make sure the pickers are not too wide, adjust width as necessary
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.light_gray,
+    borderRadius: 8,
+    marginHorizontal: 5,   // Add some spacing between the pickers
   },
 });

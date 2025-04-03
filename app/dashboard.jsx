@@ -1,36 +1,36 @@
 import React, { useState, useEffect } from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-} from "react-native";
+import { Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { getAuth } from "firebase/auth";
+import { db } from "../firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
-import Colors from "../../assets/colors";
-import UserStats from "../components/UserStats";
-import WorkoutSummary from "../components/WorkoutSummary";
-import ProgressChart from "../components/ProgressChart";
-import ChallengesLB from "../components/ChallengesLB";
-import Notifications from "../components/Notifications";
+import Colors from "../assets/colors";
+import CustomHeader from "./components/CustomHeader";
+import UserStats from "./components/UserStats";
+import WorkoutSummary from "./components/workout";
+import ProgressChart from "./components/ProgressChart";
+import ChallengesLB from "./components/ChallengesLB";
+import Notifications from "./components/Notifications";
+import { useUser } from "./UserContext"; // Import the user context
 
-const Dashboard = () => {
+export default function Dashboard() {
+  const { userId, setUserId } = useUser(); // Access userId from context
   const [userData, setUserData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+
   const auth = getAuth();
   const user = auth.currentUser;
 
-  // Function to fetch user data from Firestore
+  // Fetch user data from Firestore
   const fetchUserData = async () => {
     try {
       if (user) {
+        console.log("Fetching user data for:", user.uid);
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
-
         if (docSnap.exists()) {
           setUserData(docSnap.data());
+          setUserId(user.uid);  // Set userId in context
+          console.log("User data fetched successfully:", docSnap.data());
         } else {
           console.log("No data found");
         }
@@ -44,7 +44,14 @@ const Dashboard = () => {
     fetchUserData();
   }, [user]);
 
-  // Refresh handler when the user pulls to refresh
+  const onSignOut = () => {
+    auth.signOut().then(() => {
+      console.log("Signed out successfully");
+    }).catch((error) => {
+      console.error("Error signing out:", error);
+    });
+  };
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchUserData().finally(() => setRefreshing(false));
@@ -53,15 +60,13 @@ const Dashboard = () => {
   if (!userData) {
     return (
       <View style={styles.container}>
+        <CustomHeader showSettingsButton onSignOut={onSignOut} userId={userId} />
         <Text style={styles.title}>Loading user data...</Text>
       </View>
     );
   }
 
-  // Get the current hour
   const currentHour = new Date().getHours();
-
-  // Determine the greeting message based on the time of day
   let greetingMessage = "";
   let emoji = "";
   if (currentHour >= 5 && currentHour < 12) {
@@ -77,6 +82,7 @@ const Dashboard = () => {
 
   return (
     <View style={styles.container}>
+      <CustomHeader showSettingsButton showLogo />
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -86,9 +92,7 @@ const Dashboard = () => {
         <Text style={styles.title}>
           {greetingMessage} {emoji}
         </Text>
-        <Text style={styles.subtitle}>
-          You're doing great today! Keep Strong 💪
-        </Text>
+        <Text style={styles.subtitle}>You're doing great today! Keep Strong 💪</Text>
         <View style={styles.infoContainer}>
           <UserStats userData={userData} />
           <WorkoutSummary />
@@ -99,9 +103,7 @@ const Dashboard = () => {
       </ScrollView>
     </View>
   );
-};
-
-export default Dashboard;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -125,5 +127,4 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontStyle: "italic",
   },
-  
 });

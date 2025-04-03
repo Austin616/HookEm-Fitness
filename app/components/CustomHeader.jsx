@@ -1,21 +1,28 @@
-import {
-  Text,
-  View,
-  SafeAreaView,
-  Image,
-  TouchableOpacity,
-} from "react-native";
-import Colors from "../../assets/colors";
+import { Text, View, SafeAreaView, Image, TouchableOpacity } from "react-native";
+import { useRouter, usePathname } from "expo-router"; // Expo Router hooks
+import Colors from "../../assets/colors"; 
 import arrowIcon from "../../assets/images/backIcon.png";
-import { useNavigation, useRoute } from "@react-navigation/native";
 import Settings from "../../assets/images/setting.png";
-import logo from "../../assets/images/app_logo.png"; // Assuming you have a logo image
+import logo from "../../assets/images/app_logo.png";
+import { useUser } from "../UserContext"; // Import the user context
 
-const CustomHeader = ({ showBackButton, showSettingsButton }) => {
-  const navigation = useNavigation();
-  const route = useRoute(); 
+const CustomHeader = ({ showBackButton = false, showSettingsButton = false, showLogo = false}) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { userId } = useUser(); // Access userId from UserContext
 
-  const title = route.name === "Dashboard" ? "Hook'Em Fitness" : "";
+  const title = pathname === "/dashboard" ? "Hook'Em Fitness" : "";
+
+  // Handle navigation to settings with userId and onSignOut as query params
+  const navigateToSettings = () => {
+    if (!userId) {
+      console.error("User ID is not available!");
+      return;
+    }
+
+    console.log("Navigating to settings with userId:", userId);
+    router.push("/settings"); // Adjust the path as necessary
+  };
 
   return (
     <SafeAreaView style={{ backgroundColor: Colors.primary }}>
@@ -28,34 +35,34 @@ const CustomHeader = ({ showBackButton, showSettingsButton }) => {
           height: 60,
         }}
       >
-        {/* Back Button (Conditionally render based on showBackButton prop) */}
+        {/* Back Button (Only show when needed) */}
         {showBackButton && (
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => router.back()}>
             <Image
               source={arrowIcon}
-              style={{ width: 24, height: 24, tintColor: Colors.ut_burnt_orange }} 
+              style={{ width: 24, height: 24, tintColor: Colors.ut_burnt_orange }}
             />
           </TouchableOpacity>
         )}
 
-        {/* Title */}
+        {/* Logo (Only show when `showLogo` is true) */}
+        {showLogo && (
           <Image
           source={logo}
           style={{
-            width: 40, // Adjusted logo width
-            height: 30, // Adjusted logo height
-            marginLeft: 8,
-            marginRight: 8,
+            width: 40,
+            height: 30,
             tintColor: Colors.white,
             backgroundColor: Colors.ut_burnt_orange,
-            borderRadius: 8, // Slight rounding for the background
-            padding: 4, // Padding inside the logo background
+            borderRadius: 8,
+            padding: 4,
           }}
         />
+        )}
 
-        {/* Settings Button (Conditionally render based on showSettingsButton prop) */}
-        {showSettingsButton && (
-          <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
+        {/* Settings Button (Only show when `showSettingsButton` is true or on Dashboard) */}
+        {(showSettingsButton || pathname === "/dashboard") && userId && (
+          <TouchableOpacity onPress={navigateToSettings}>
             <Image
               source={Settings}
               style={{ width: 24, height: 24, tintColor: Colors.ut_burnt_orange }}

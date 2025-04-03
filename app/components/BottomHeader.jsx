@@ -1,65 +1,23 @@
-import { View, TouchableOpacity, Image, Text, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Dashboard from "../screens/Dashboard";
-import WorkoutTracker from "../screens/WorkoutTracker";
-import FoodTracker from "../screens/FoodTracker"; 
+import { View, Image, StyleSheet } from "react-native";
+import { Link } from "expo-router";
 import foodIcon from "../../assets/images/food.png";
 import homeIcon from "../../assets/images/home.png";
 import profileIcon from "../../assets/images/user.png";
 import Colors from "../../assets/colors";
 
 const BottomHeader = () => {
-  const navigation = useNavigation();
-  const Tab = createBottomTabNavigator();
-
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused }) => {
-          let iconName;
-
-          if (route.name === "Home") {
-            iconName = homeIcon;
-          } else if (route.name === "Workout") {
-            iconName = profileIcon;
-          }
-          else if (route.name === "Food") {
-            iconName = foodIcon;
-          }
-
-          return (
-            <Image
-              source={iconName}
-              style={[styles.icon, { tintColor: focused ? Colors.ut_burnt_orange : Colors.dark_gray }]}
-            />
-          );
-        },
-        tabBarStyle: styles.container,
-      })}
-    >
-      <Tab.Screen
-        name="Home"
-        component={Dashboard}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="Workout"
-        component={WorkoutTracker}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="Food"
-        component={FoodTracker}
-        options={{
-          headerShown: false,
-        }}
-      />
-    </Tab.Navigator>
+    <View style={styles.container}>
+      <Link href="/dashboard" style={styles.button}>
+        <Image source={homeIcon} style={styles.icon} />
+      </Link>
+      <Link href="/workout" style={styles.button}>
+        <Image source={profileIcon} style={styles.icon} />
+      </Link>
+      <Link href="/profile" style={styles.button}>
+        <Image source={foodIcon} style={styles.icon} />
+      </Link>
+    </View>
   );
 };
 
@@ -74,11 +32,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderTopWidth: 1,
     borderTopColor: Colors.ut_burnt_orange,
+    paddingHorizontal: 10,  // Adds horizontal padding for better spacing
   },
   button: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 5,  // Adds padding around the icons to increase tap area
   },
   icon: {
     width: 24,
