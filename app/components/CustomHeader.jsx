@@ -1,10 +1,10 @@
 import { Text, View, SafeAreaView, Image, TouchableOpacity } from "react-native";
-import { useRouter, usePathname } from "expo-router"; // Expo Router hooks
+import { useRouter, usePathname } from "expo-router";
 import Colors from "../../assets/colors"; 
 import arrowIcon from "../../assets/images/backIcon.png";
 import Settings from "../../assets/images/setting.png";
 import logo from "../../assets/images/app_logo.png";
-import { useUser } from "../UserContext"; // Import the user context
+import { useUser } from "../UserContext";
 
 const CustomHeader = ({ showBackButton = false, showSettingsButton = false, showLogo = false}) => {
   const router = useRouter();

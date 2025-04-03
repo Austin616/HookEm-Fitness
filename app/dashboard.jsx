@@ -10,7 +10,7 @@ import WorkoutSummary from "./components/workout";
 import ProgressChart from "./components/ProgressChart";
 import ChallengesLB from "./components/ChallengesLB";
 import Notifications from "./components/Notifications";
-import { useUser } from "./UserContext"; // Import the user context
+import { useUser } from "./UserContext";
 
 export default function Dashboard() {
   const { userId, setUserId } = useUser(); // Access userId from context
@@ -24,13 +24,11 @@ export default function Dashboard() {
   const fetchUserData = async () => {
     try {
       if (user) {
-        console.log("Fetching user data for:", user.uid);
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setUserData(docSnap.data());
-          setUserId(user.uid);  // Set userId in context
-          console.log("User data fetched successfully:", docSnap.data());
+          setUserId(user.uid);
         } else {
           console.log("No data found");
         }
