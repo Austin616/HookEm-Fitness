@@ -5,6 +5,7 @@ import { useLocalSearchParams } from "expo-router";
 import CustomHeader from "../components/CustomHeader";
 import Colors from "../../assets/colors";
 import WorkoutCard from "./workoutCard";
+import Exercises from "./excercises";
 
 const WorkoutDetail = () => {
   const router = useRouter();
@@ -50,8 +51,9 @@ const WorkoutDetail = () => {
         <Text style={styles.workoutName}>
           {workoutName.charAt(0).toUpperCase() + workoutName.slice(1)} on{" "}
           {new Date(workoutDate).toLocaleDateString()}{" "}
-          {/* This will format the date in a more readable way */}
         </Text>
+        <Exercises />
+
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
@@ -77,17 +79,17 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    fontSize: 36, // Slightly larger title
-    fontWeight: "bold", // Make it bold to stand out
-    color: Colors.dark_gray, // Adjust based on your theme
-    marginBottom: 8, // Space below the title
-    textAlign: "center", // Center the title horizontally
+    fontSize: 36,
+    fontWeight: "bold",
+    color: Colors.dark_gray,
+    marginBottom: 8,
+    textAlign: "center",
   },
   workoutName: {
-    fontSize: 18, // Subtle but readable size
-    color: Colors.gray, // Adjust based on your theme
-    textAlign: "center", // Center the workout details horizontally
-    fontStyle: "italic", // Adding some variety to the font style
+    fontSize: 18,
+    color: Colors.gray,
+    textAlign: "center",
+    fontStyle: "italic",
   },
   scrollViewContainer: {
     flexGrow: 1,
@@ -104,8 +106,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerContainer: {
-    alignItems: "center", // Center the text horizontally
-    marginBottom: 24, // Space between the header and the rest of the content
+    alignItems: "center",
+    marginBottom: 24,
   },
 });
 
