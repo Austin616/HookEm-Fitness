@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, TextInput, Button, StyleSheet } from 'react-native';
-import Colors from '../../../assets/colors'; // Adjust according to your color setup
+import Colors from '../../assets/colors'; // Adjust according to your color setup
 
 const WorkoutModal = ({ isVisible, onClose, onCreateWorkout }) => {
     const [workoutName, setWorkoutName] = useState('');

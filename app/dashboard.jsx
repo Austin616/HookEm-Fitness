@@ -60,7 +60,7 @@ export default function Dashboard() {
   if (!userData) {
     return (
       <View style={styles.container}>
-        <CustomHeader showSettingsButton onSignOut={onSignOut} userId={userId} />
+        <CustomHeader showSettingsButton />
         <Text style={styles.title}>Loading user data...</Text>
       </View>
     );

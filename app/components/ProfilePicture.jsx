@@ -1,4 +1,3 @@
-// ProfilePicture.js
 import React, { useState } from "react";
 import { TouchableOpacity, Image, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";

@@ -1,21 +1,35 @@
 import { View, Image, StyleSheet } from "react-native";
-import { Link } from "expo-router";
-import foodIcon from "../../assets/images/food.png";
+import { Link, usePathname } from "expo-router"; // Import usePathname to get the current route
+import foodIcon from "../../assets/images/user.png";
 import homeIcon from "../../assets/images/home.png";
-import profileIcon from "../../assets/images/user.png";
+import dumbellIcon from "../../assets/images/more.png";
 import Colors from "../../assets/colors";
 
 const BottomHeader = () => {
+  const pathname = usePathname(); // Get the current route path
+
+  // Function to determine if the link is active
+  const isActive = (path) => pathname === path;
+
   return (
     <View style={styles.container}>
-      <Link href="/dashboard" style={styles.button}>
-        <Image source={homeIcon} style={styles.icon} />
+      <Link href="/dashboard" style={[styles.button, isActive("/dashboard") && styles.activeButton]}>
+        <Image
+          source={homeIcon}
+          style={[styles.icon, isActive("/dashboard") && styles.activeIcon]} // Active style for icon
+        />
       </Link>
-      <Link href="/workout" style={styles.button}>
-        <Image source={profileIcon} style={styles.icon} />
+      <Link href="/workout" style={[styles.button, isActive("/workout") && styles.activeButton]}>
+        <Image
+          source={dumbellIcon}
+          style={[styles.icon, isActive("/workout") && styles.activeIcon]} // Active style for icon
+        />
       </Link>
-      <Link href="/profile" style={styles.button}>
-        <Image source={foodIcon} style={styles.icon} />
+      <Link href="/profile" style={[styles.button, isActive("/profile") && styles.activeButton]}>
+        <Image
+          source={foodIcon}
+          style={[styles.icon, isActive("/profile") && styles.activeIcon]} // Active style for icon
+        />
       </Link>
     </View>
   );
@@ -33,6 +47,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.ut_burnt_orange,
     paddingHorizontal: 10,  // Adds horizontal padding for better spacing
+    paddingBottom: 10,  // Adds padding at the bottom to avoid the swipe gesture area overlap
   },
   button: {
     alignItems: "center",
@@ -42,6 +57,13 @@ const styles = StyleSheet.create({
   icon: {
     width: 24,
     height: 24,
-    tintColor: Colors.ut_burnt_orange,
+    tintColor: Colors.dark_gray,
+  },
+  activeButton: {
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.ut_burnt_orange, // Underline active button
+  },
+  activeIcon: {
+    tintColor: Colors.ut_burnt_orange, // Change color for active icon
   },
 });

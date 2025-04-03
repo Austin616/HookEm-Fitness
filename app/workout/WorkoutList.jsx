@@ -1,18 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import Animated from 'react-native-reanimated'; 
-import Colors from '../../../assets/colors';
+import Animated from 'react-native-reanimated';
+import { useRouter } from 'expo-router'; // Import useRouter from expo-router
+import Colors from '../../assets/colors';
 
-const WorkoutList = ({ workouts, navigation, onDeleteWorkout }) => {
+const WorkoutList = ({ workouts, onDeleteWorkout }) => {
   
+  const router = useRouter(); // Use useRouter hook for routing
+
   const currentDate = new Date();
   const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay()));
-  startOfWeek.setHours(0, 0, 0, 0); 
+  startOfWeek.setHours(0, 0, 0, 0);
 
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999); 
+  endOfWeek.setHours(23, 59, 59, 999);
 
   // Function to filter workouts within this week
   const filterWorkoutsThisWeek = () => {
@@ -28,9 +31,11 @@ const WorkoutList = ({ workouts, navigation, onDeleteWorkout }) => {
 
   const renderWorkoutItem = ({ item }) => {
     const handleNavigation = () => {
-      navigation.navigate("WorkoutDetail", { workoutName: item.name, workoutDate: item.date });
+      // Use file-based routing to pass the parameters in the URL
+      router.push(`/workout/WorkoutDetail?workoutName=${item.name}&workoutDate=${item.date}`);
+
     };
-  
+
     const renderRightActions = () => {
       return (
         <Animated.View style={styles.deleteButtonContainer}>
@@ -38,13 +43,13 @@ const WorkoutList = ({ workouts, navigation, onDeleteWorkout }) => {
         </Animated.View>
       );
     };
-  
+
     return (
       <Swipeable
         renderRightActions={renderRightActions}
-        onSwipeableRightOpen={() => handleDelete(item.id)} 
-        overshootRight={false} 
-        rightThreshold={50}  
+        onSwipeableRightOpen={() => handleDelete(item.id)}
+        overshootRight={false}
+        rightThreshold={50}
       >
         <TouchableOpacity onPress={handleNavigation} activeOpacity={1}>
           <View style={styles.workoutItem}>
@@ -65,11 +70,11 @@ const WorkoutList = ({ workouts, navigation, onDeleteWorkout }) => {
       <Text style={styles.subtitle}>Workouts This Week</Text>
       {workoutsThisWeek.length > 0 ? (
         <ScrollView showsVerticalScrollIndicator={false}>
-            {workoutsThisWeek.map((workout) => (
-                <View key={workout.id}>
-                {renderWorkoutItem({ item: workout })}
-                </View>
-            ))}
+          {workoutsThisWeek.map((workout) => (
+            <View key={workout.id}>
+              {renderWorkoutItem({ item: workout })}
+            </View>
+          ))}
         </ScrollView>
       ) : (
         <Text style={styles.noWorkoutsText}>
@@ -106,10 +111,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.red,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 80,  
+    width: 80,
     height: 60,
     borderRadius: 5,
-    marginLeft: -10,  
+    marginLeft: -10,
   },
   workoutText: {
     fontSize: 18,
