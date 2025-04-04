@@ -80,11 +80,20 @@ const WorkoutTracker = () => {
         )}
         <Calendar
           onDayPress={onDayPress}
-          markedDates={workoutDates} // Pass the marked dates to the calendar
+          markedDates={{
+            ...workoutDates, // Keep existing marked dates
+            [selectedDate]: { // Ensure selected day styling
+              selected: true,
+              selectedColor: Colors.ut_burnt_orange, // Selected day color
+              marked: true,
+
+              fontWeight: "bold",
+            },
+          }}
           theme={{
-            todayTextColor: Colors.primary,
-            selectedDayBackgroundColor: Colors.secondary,
-            arrowColor: Colors.primary,
+            todayTextColor: Colors.ut_burnt_orange,
+            selectedDayColor: Colors.ut_burnt_orange,
+            arrowColor: Colors.ut_burnt_orange,
           }}
         />
         <WorkoutModal
@@ -115,7 +124,7 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     fontSize: 18,
-    color: "#555",
+    color: Colors.dark_gray,
     marginBottom: 10,
     textAlign: "center",
   },

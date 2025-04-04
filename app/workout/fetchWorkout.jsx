@@ -129,6 +129,163 @@ const useFetchWorkout = () => {
     }
   };
 
+  const addSetsandRepsToExercise = async (
+    workoutName,
+    workoutDate,
+    exerciseId,
+    setsData // Expecting an array of objects [{sets: number, reps: number}, ...]
+  ) => {
+    try {
+      if (user) {
+        const workoutId = `${workoutName}-${workoutDate}`; // Unique workout ID
+        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+        const workoutSnap = await getDoc(workoutRef);
+  
+        if (workoutSnap.exists()) {
+          const workoutData = workoutSnap.data();
+          const updatedExercises = workoutData.exercises.map((exercise) => {
+            if (exercise.id === exerciseId) {
+              return { 
+                ...exercise, 
+                setsData: setsData.map((set, index) => ({
+                  ...set,
+                  sets: index + 1, // Automatically assign the number of sets based on the row number
+                })),
+              };
+            }
+            return exercise;
+          });
+  
+          await setDoc(
+            workoutRef,
+            { ...workoutData, exercises: updatedExercises },
+            { merge: true }
+          );
+          console.log("Sets and reps added to exercise:", workoutId);
+        } else {
+          console.log("Workout not found:", workoutId);
+        }
+      }
+    } catch (error) {
+      console.error("Error adding sets and reps to exercise:", error);
+    }
+  };
+  
+  
+  const fetchSetsandRepsFromExercise = async (
+    workoutName,
+    workoutDate,
+    exerciseId
+  ) => {
+    try {
+      if (user) {
+        const workoutId = `${workoutName}-${workoutDate}`; // Unique workout ID
+        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+        const workoutSnap = await getDoc(workoutRef);
+  
+        if (workoutSnap.exists()) {
+          const workoutData = workoutSnap.data();
+          const exercise = workoutData.exercises.find(
+            (exercise) => exercise.id === exerciseId
+          );
+          return exercise ? exercise.setsData : []; // Return all setsData if found
+        } else {
+          console.log("Workout not found:", workoutId);
+          return [];
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching sets and reps from exercise:", error);
+      return [];
+    }
+  };
+
+  const deleteOneSetFromExercise = async (workoutName, workoutDate, exerciseId, setIndex) => {
+    try {
+      if (user) {
+        const workoutId = `${workoutName}-${workoutDate}`;
+        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+        const workoutSnap = await getDoc(workoutRef);
+  
+        if (workoutSnap.exists()) {
+          const workoutData = workoutSnap.data();
+          const updatedExercises = workoutData.exercises.map((exercise) => {
+            if (exercise.id === exerciseId && exercise.setsData) {
+              const updatedSetsData = exercise.setsData.filter((_, index) => index !== setIndex);
+              return { ...exercise, setsData: updatedSetsData };
+            }
+            return exercise;
+          });
+  
+          await setDoc(workoutRef, { exercises: updatedExercises }, { merge: true });
+          console.log(`Set ${setIndex + 1} deleted from exercise:`, workoutId);
+        } else {
+          console.log("Workout not found:", workoutId);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting set from exercise:", error);
+    }
+  };
+  
+  const handleCompletedSet = async (workoutName, workoutDate, exerciseId, setIndex) => {
+    try {
+      if (user) {
+        const workoutId = `${workoutName}-${workoutDate}`;
+        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+        const workoutSnap = await getDoc(workoutRef);
+  
+        if (workoutSnap.exists()) {
+          const workoutData = workoutSnap.data();
+          const updatedExercises = workoutData.exercises.map((exercise) => {
+            if (exercise.id === exerciseId && exercise.setsData) {
+              const updatedSetsData = exercise.setsData.map((set, index) => {
+                if (index === setIndex) {
+                  return { ...set, completed: true }; // Mark the set as completed
+                }
+                return set;
+              });
+              return { ...exercise, setsData: updatedSetsData };
+            }
+            return exercise;
+          });
+  
+          await setDoc(workoutRef, { exercises: updatedExercises }, { merge: true });
+          console.log(`Set ${setIndex + 1} marked as completed in exercise:`, workoutId);
+        } else {
+          console.log("Workout not found:", workoutId);
+        }
+    }
+    } catch (error) {
+      console.error("Error marking set as completed:", error);
+    }
+    };
+
+    const fetchCompletedSetsFromExercise = async (workoutName, workoutDate, exerciseId) => {
+      try {
+        if (user) {
+            const workoutId = `${workoutName}-${workoutDate}`;
+            const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+            const workoutSnap = await getDoc(workoutRef);
+    
+            if (workoutSnap.exists()) {
+                const workoutData = workoutSnap.data();
+                const exercise = workoutData.exercises.find(
+                (exercise) => exercise.id === exerciseId
+                );
+                return exercise ? exercise.setsData.filter(set => set.completed) : []; // Return completed sets if found
+            } else {
+                console.log("Workout not found:", workoutId);
+                return [];
+            }
+            }
+        } catch (error) {
+            console.error("Error fetching completed sets from exercise:", error);
+            return [];
+        }
+    };
+  
+
   const fetchExerciseFromWorkout = async (workoutName, workoutDate) => {
     try {
       if (user) {
@@ -148,7 +305,94 @@ const useFetchWorkout = () => {
       console.error("Error fetching exercises from workout:", error);
       return [];
     }
-  }
+  };
+
+  const FetchMuscleGroups = async () => {
+    try {
+      const response = await fetch(
+        "https://raw.githubusercontent.com/Austin616/free-exercise-db/main/dist/exercises.json"
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const primaryMuscleGroups = data
+          .map((exercise) => exercise.primaryMuscles)
+          .flat();
+        const uniqueMuscleGroups = [...new Set(primaryMuscleGroups)];
+        return uniqueMuscleGroups;
+      } else {
+        console.error("Error fetching data", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching data", error);
+    }
+  };
+
+  const fetchWorkoutsInMuscleGroup = async () => {
+    try {
+      const response = await fetch(
+        "https://raw.githubusercontent.com/Austin616/free-exercise-db/main/dist/exercises.json"
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const primaryMuscleGroups = data
+          .map((exercise) => exercise.primaryMuscles)
+          .flat();
+        const uniqueMuscleGroups = [...new Set(primaryMuscleGroups)];
+        return uniqueMuscleGroups;
+      } else {
+        console.error("Error fetching data", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching data", error);
+    }
+  };
+
+  const fetchExercises = async () => {
+    try {
+      const response = await fetch(
+        "https://raw.githubusercontent.com/Austin616/free-exercise-db/main/dist/exercises.json"
+      );
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      } else {
+        console.error("Error fetching data", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching data", error);
+    }
+  };
+
+  const deleteExerciseFromWorkout = async (
+    workoutName,
+    workoutDate,
+    exerciseId
+  ) => {
+    try {
+      if (user) {
+        const workoutId = `${workoutName}-${workoutDate}`; // Unique workout ID
+        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+        const workoutSnap = await getDoc(workoutRef);
+
+        if (workoutSnap.exists()) {
+          const workoutData = workoutSnap.data();
+          const updatedExercises = workoutData.exercises.filter(
+            (exercise) => exercise.id !== exerciseId
+          );
+          await setDoc(
+            workoutRef,
+            { ...workoutData, exercises: updatedExercises },
+            { merge: true }
+          );
+          console.log("Exercise deleted from workout:", workoutId);
+        } else {
+          console.log("Workout not found:", workoutId);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting exercise from workout:", error);
+    }
+  };
 
   // Call the functions when user changes
   useEffect(() => {
@@ -165,7 +409,16 @@ const useFetchWorkout = () => {
     handleCreateWorkout,
     handleDeleteWorkout,
     addExerciseToWorkout,
-    fetchExerciseFromWorkout
+    fetchExerciseFromWorkout,
+    fetchWorkoutsInMuscleGroup,
+    FetchMuscleGroups,
+    fetchExercises,
+    deleteExerciseFromWorkout,
+    addSetsandRepsToExercise,
+    fetchSetsandRepsFromExercise,
+    deleteOneSetFromExercise,
+    handleCompletedSet,
+    fetchCompletedSetsFromExercise,
   };
 };
 

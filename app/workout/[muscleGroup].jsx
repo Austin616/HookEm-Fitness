@@ -20,7 +20,7 @@ const MuscleGroupDetail = () => {
   const [exercises, setExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const { addExerciseToWorkout } = useFetchWorkout();
+  const { addExerciseToWorkout, fetchExercises } = useFetchWorkout();
 
   // Filter states
   const [forceFilter, setForceFilter] = useState("");
@@ -34,7 +34,7 @@ const MuscleGroupDetail = () => {
     console.log("Workout Name:", workoutName);
     console.log("Workout Date:", workoutDate);
 
-    const fetchExercises = async () => {
+    const getExercises = async () => {
       try {
         const response = await fetch(
           "https://raw.githubusercontent.com/Austin616/free-exercise-db/main/dist/exercises.json"
@@ -54,7 +54,7 @@ const MuscleGroupDetail = () => {
       }
     };
 
-    fetchExercises();
+    getExercises();
   }, [muscleGroup, workoutName, workoutDate]);
 
   useEffect(() => {
