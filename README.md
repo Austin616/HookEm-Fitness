@@ -55,4 +55,4 @@ You can begin development by editing the files inside the **app** directory. Thi
   - **Firestore (DB)**: Stores user data in a JSON format.
   - **Storage**: Stores media, such as profile pictures.
 
-You can find the exercise JSON data on the [GitHub repo](https://github.com/your-repo-link-here).
+You can find the exercise JSON data on the [GitHub repo](https://github.com/Austin616/free-exercise-db).
