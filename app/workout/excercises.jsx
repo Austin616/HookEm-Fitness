@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Text,
   TouchableOpacity,
-  TextInput,
   View,
   StyleSheet,
   Image,
   Alert,
+  Modal,
+  Button,
 } from "react-native";
 import Colors from "../../assets/colors";
 import useFetchWorkout from "./fetchWorkout";
@@ -16,6 +17,7 @@ import {
 } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import closeIcon from "../../assets/images/close.png";
+import { Picker } from "@react-native-picker/picker"; // Import Picker
 
 const Exercise = ({
   exercise,
@@ -32,6 +34,9 @@ const Exercise = ({
   const { fetchCompletedSetsFromExercise } = useFetchWorkout();
   const swipeableRefs = useRef({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isPickerVisible, setIsPickerVisible] = useState(false);
+  const [selectedReps, setSelectedReps] = useState(null);
+  const [setIndexForPicker, setSetIndexForPicker] = useState(null);
 
   const fetchCompletedSet = async (exerciseId) => {
     try {
@@ -117,6 +122,32 @@ const Exercise = ({
     }
   }, [exercise.id, setsReps]);
 
+  const handleRepsPickerChange = (itemValue) => {
+    setSelectedReps(itemValue);
+  };
+
+  const handleDonePicker = () => {
+    if (setIndexForPicker !== null) {
+      handleAddSetsReps(exercise.id); // Save the updated sets and reps
+      handleSetsRepsChange(
+        exercise.id,
+        setIndexForPicker,
+        "reps",
+        selectedReps
+      );
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setIsPickerVisible(false);
+
+    }
+  };
+
+  useEffect(() => {
+    if (exercise.id) {
+      fetchCompletedSet(exercise.id);
+    }
+  }
+  , [exercise.id, setsReps]);
+
   return (
     <GestureHandlerRootView>
       <View style={styles.exerciseContainer}>
@@ -130,9 +161,11 @@ const Exercise = ({
           </TouchableOpacity>
         )}
         <Text style={styles.workoutGroup}>
-          {exercise.primaryMuscles
-            .map((muscle) => muscle.charAt(0).toUpperCase() + muscle.slice(1))
-            .join(", ")}
+          <Text style={styles.workoutGroup}>
+            {[...exercise.primaryMuscles, ...exercise.secondaryMuscles]
+              .map((muscle) => muscle.charAt(0).toUpperCase() + muscle.slice(1))
+              .join(", ")}
+          </Text>
         </Text>
 
         {setsReps[exercise.id]?.map((set, index) => (
@@ -141,21 +174,24 @@ const Exercise = ({
             ref={(ref) =>
               (swipeableRefs.current[`${exercise.id}-${index}`] = ref)
             }
-            renderLeftActions={() => (
-              <View style={styles.swipeActionLeft}>
+            renderRightActions={() => (
+              <View style={styles.swipeActionRight}>
                 <Text style={styles.swipeActionText}>Complete</Text>
               </View>
             )}
-            renderRightActions={() => (
-              <View style={[styles.swipeActionRight]}>
-                <Text style={styles.swipeActionText}>Delete</Text>
-              </View>
-            )}
+            renderLeftActions={() =>
+              isEditing ? ( // Only show the delete swipe action if isEditing is true
+                <View style={[styles.swipeActionLeft]}>
+                  <Text style={styles.swipeActionText}>Delete</Text>
+                </View>
+              ) : null
+            }
             onSwipeableOpen={(direction) => {
-              if (direction === "left") {
+              if (direction === "right") {
                 handleCompleteSet(exercise.id, index);
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              } else if (direction === "right") {
+              } else if (direction === "left" && isEditing) {
+                // Delete set only when in edit mode
                 handleDeleteSet(exercise.id, index);
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
               }
@@ -163,7 +199,7 @@ const Exercise = ({
             friction={2}
             overshootLeft={false}
             overshootRight={false}
-            threshold={20}
+            maxSwipeDistance={20}
           >
             <View
               style={[
@@ -172,16 +208,18 @@ const Exercise = ({
               ]}
             >
               <Text style={styles.setText}>Set {index + 1}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Reps"
-                keyboardType="numeric"
-                value={set.reps}
-                onChangeText={(text) => {
-                  handleSetsRepsChange(exercise.id, index, "reps", text);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              <TouchableOpacity
+                onPress={() => {
+                  setSetIndexForPicker(index);
+                  setSelectedReps(set.reps); // Set initial value for picker
+                  setIsPickerVisible(true);
                 }}
-              />
+                style={styles.input}
+              >
+                <Text style={styles.pickerText}>
+                  {set.reps ? `${set.reps} reps` : "Select Reps"}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => handleCompleteSet(exercise.id, index)}
                 style={[styles.completeButton, set.completed]}
@@ -209,12 +247,53 @@ const Exercise = ({
           </Text>
         </TouchableOpacity>
 
+        {/* Modal for the Picker */}
+        <Modal
+          visible={isPickerVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setIsPickerVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Picker
+                selectedValue={selectedReps}
+                onValueChange={handleRepsPickerChange}
+              >
+                {[...Array(50)].map((_, i) => (
+                  <Picker.Item key={i} label={`${i + 1}`} value={`${i + 1}`} />
+                ))}
+              </Picker>
+              <TouchableOpacity onPress={handleDonePicker}>
+                <Text style={styles.doneEditingText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: 300,
+  },
+  pickerText: {
+    fontSize: 16,
+    color: Colors.dark_gray,
+    textAlign: "center",
+    alignSelf: "center",
+  },
   exerciseContainer: {
     backgroundColor: Colors.primary,
     padding: 12,
@@ -251,7 +330,7 @@ const styles = StyleSheet.create({
   workoutGroup: {
     fontSize: 14,
     color: Colors.dark_gray,
-    marginBottom: 8,
+    marginBottom: 20,
   },
   setRow: {
     flexDirection: "row",
@@ -262,11 +341,11 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: Colors.ut_burnt_orange,
+    borderColor: Colors.gray,
   },
   completedRow: {
     borderColor: Colors.ut_burnt_orange,
-    borderWidth: 2,
+    borderWidth: 3,
   },
   setText: {
     fontSize: 16,
@@ -274,14 +353,16 @@ const styles = StyleSheet.create({
     color: Colors.dark_gray,
   },
   input: {
-    height: 40,
+    height: 40,  // Ensure the input field has a fixed height
     borderColor: Colors.gray,
     borderWidth: 1,
     borderRadius: 5,
     width: "45%",
     paddingLeft: 8,
     fontSize: 16,
-    marginBottom: 8,
+    justifyContent: "center",  // Ensure input is centered vertically
+    alignItems: "center",  // Center content horizontally
+    textAlignVertical: "center",  // Center text vertically in the input
   },
   addRowText: {
     color: Colors.white,
@@ -294,7 +375,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: 100,
     alignSelf: "center",
-
   },
   doneEditingText: {
     color: Colors.ut_burnt_orange,
@@ -315,15 +395,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  swipeActionLeft: {
-    backgroundColor: Colors.ut_burnt_orange,
+  swipeActionRight: {
     justifyContent: "center",
+    alignItems: "center",
     flexDirection: "row",
     marginBottom: 8,
+    backgroundColor: Colors.ut_burnt_orange,
     padding: 8,
     borderRadius: 5,
+    marginLeft: -5,
   },
-  swipeActionRight: {
+  swipeActionLeft: {
     backgroundColor: Colors.red,
     justifyContent: "center",
     alignItems: "center",
@@ -332,6 +414,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.red,
     padding: 8,
     borderRadius: 5,
+    marginRight: -5,
+    width: 80,
   },
   swipeActionText: {
     color: Colors.white,

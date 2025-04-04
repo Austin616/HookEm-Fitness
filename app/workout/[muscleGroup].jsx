@@ -14,6 +14,7 @@ import CustomHeader from "../components/CustomHeader";
 import Colors from "../../assets/colors";
 import closeIcon from "../../assets/images/close.png";
 import useFetchWorkout from "./fetchWorkout";
+import { useRouter } from "expo-router";
 
 const MuscleGroupDetail = () => {
   const { muscleGroup, workoutName, workoutDate } = useLocalSearchParams();
@@ -21,6 +22,7 @@ const MuscleGroupDetail = () => {
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { addExerciseToWorkout, fetchExercises } = useFetchWorkout();
+  const router = useRouter();
 
   // Filter states
   const [forceFilter, setForceFilter] = useState("");
@@ -114,6 +116,7 @@ const MuscleGroupDetail = () => {
       // Add exercise to workout
       await addExerciseToWorkout(workoutId, exercise);
       console.log("Exercise added:", exercise.name);
+      router.push(`/workout/WorkoutDetail?workoutName=${workoutName}&workoutDate=${workoutDate}`); // Navigate to the workout detail page
     } catch (error) {
       console.error("Error adding exercise to workout:", error);
     }
