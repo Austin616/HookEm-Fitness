@@ -1,142 +1,222 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Text,
-  View,
-  TextInput,
   TouchableOpacity,
+  TextInput,
+  View,
   StyleSheet,
-  ScrollView,
+  Image,
+  Alert,
 } from "react-native";
 import Colors from "../../assets/colors";
-import { Swipeable } from "react-native-gesture-handler";
-import Animated from "react-native-reanimated";
+import useFetchWorkout from "./fetchWorkout";
+import {
+  Swipeable,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import * as Haptics from "expo-haptics";
+import closeIcon from "../../assets/images/close.png";
 
 const Exercise = ({
   exercise,
   setsReps,
+  setSetsReps,
   handleSetsRepsChange,
-  handleAddRow,
   handleAddSetsReps,
+  handleAddRow,
   handleDeleteExercise,
-  handleDeleteSet,
-  handleCompletedSet, // Function to mark the set as completed in Firestore
   workoutName,
   workoutDate,
-  getCompletedSets, // The prop function to get completed sets
+  setCompletedSets,
 }) => {
-  const swipeableRefs = useRef([]);
-  const [completedSets, setCompletedSets] = useState({}); // Track completed sets locally
+  const { fetchCompletedSetsFromExercise } = useFetchWorkout();
+  const swipeableRefs = useRef({});
+  const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    // Fetch completed sets when the component mounts or updates
-    const fetchCompletedSets = async () => {
-      const sets = await getCompletedSets(workoutName, workoutDate, exercise.id);
-      setCompletedSets(sets); // Update state with the completed sets
-    };
-
-    fetchCompletedSets();
-  }, [getCompletedSets, workoutName, workoutDate, exercise.id]);
-
-  const renderDeleteAction = (setId, index) => {
-    return (
-      <Animated.View style={styles.deleteButtonContainer}>
-        <Text style={styles.deleteText}>Delete</Text>
-      </Animated.View>
-    );
-  };
-
-  const handleSwipeClose = (index) => {
-    if (swipeableRefs.current[index]) {
-      swipeableRefs.current[index].close();
+  const fetchCompletedSet = async (exerciseId) => {
+    try {
+      const completedSets = await fetchCompletedSetsFromExercise(
+        workoutName,
+        workoutDate,
+        exerciseId
+      );
+      setCompletedSets((prev) => ({
+        ...prev,
+        [exerciseId]: completedSets,
+      }));
+    } catch (error) {
+      console.error("Error fetching completed sets from exercise:", error);
     }
   };
 
-  const handleSwipeLeft = (index) => {
-    handleSwipeClose(index);
-    console.log("Left swipe detected for set index:", index);
+  const handleCompleteSet = async (exerciseId, setIndex) => {
+    try {
+      setSetsReps((prev) => ({
+        ...prev,
+        [exerciseId]: prev[exerciseId].map((set, i) =>
+          i === setIndex ? { ...set, completed: !set.completed } : set
+        ),
+      }));
 
-    // Mark the set as complete locally
-    setCompletedSets((prev) => ({
-      ...prev,
-      [index]: true, // Mark this set as completed
-    }));
+      await fetchCompletedSetsFromExercise(
+        workoutName,
+        workoutDate,
+        exerciseId,
+        setIndex
+      );
+      fetchCompletedSet(exerciseId);
 
-    handleCompletedSet(workoutName, workoutDate, exercise.id, index); // Call the function to mark the set as completed in Firestore
+      if (swipeableRefs.current[`${exercise.id}-${setIndex}`]) {
+        swipeableRefs.current[`${exercise.id}-${setIndex}`].close();
+      }
+    } catch (error) {
+      console.error("Error marking set as completed:", error);
+    }
   };
 
-  const handleDelete = (exerciseId, index) => {
-    handleDeleteSet(exerciseId, index);
-    handleSwipeClose(index);
+  const handleDeleteSet = (exerciseId, setIndex) => {
+    Alert.alert(
+      "Delete Set",
+      "Are you sure you want to delete this set?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setSetsReps((prev) => ({
+              ...prev,
+              [exerciseId]: prev[exerciseId].filter((_, i) => i !== setIndex),
+            }));
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
+
+  const toggleEditing = () => {
+    if (isEditing) {
+      // Save logic here (e.g., auto-save when done editing)
+      handleAddSetsReps(exercise.id); // Automatically save the sets and reps
+    }
+    setIsEditing((prev) => !prev); // Toggle editing mode
+  };
+
+  const deleteExercise = () => {
+    handleDeleteExercise(exercise.id); // Delete exercise when "X" is pressed
+    setIsEditing(false); // Exit edit mode after deletion
+  };
+
+  useEffect(() => {
+    if (exercise.id) {
+      fetchCompletedSet(exercise.id);
+    }
+  }, [exercise.id, setsReps]);
 
   return (
-    <View style={styles.exerciseContainer}>
-      <Text style={styles.exerciseText}>{exercise.name}</Text>
-      <Text style={styles.workoutGroup}>
-        {exercise.primaryMuscles
-          .map((muscle) => muscle.charAt(0).toUpperCase() + muscle.slice(1))
-          .join(", ")}
-      </Text>
+    <GestureHandlerRootView>
+      <View style={styles.exerciseContainer}>
+        <Text style={styles.exerciseText}>{exercise.name}</Text>
+        {isEditing && (
+          <TouchableOpacity
+            onPress={deleteExercise}
+            style={styles.deleteIconContainer}
+          >
+            <Image source={closeIcon} style={styles.closeIcon} />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.workoutGroup}>
+          {exercise.primaryMuscles
+            .map((muscle) => muscle.charAt(0).toUpperCase() + muscle.slice(1))
+            .join(", ")}
+        </Text>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
         {setsReps[exercise.id]?.map((set, index) => (
           <Swipeable
             key={index}
-            ref={(ref) => (swipeableRefs.current[index] = ref)}
-            renderRightActions={() => renderDeleteAction(set.id, index)}
+            ref={(ref) =>
+              (swipeableRefs.current[`${exercise.id}-${index}`] = ref)
+            }
             renderLeftActions={() => (
-              <Animated.View style={styles.leftSwipeAction}>
-                <Text style={styles.leftSwipeText}>Marked as Green</Text>
-              </Animated.View>
+              <View style={styles.swipeActionLeft}>
+                <Text style={styles.swipeActionText}>Complete</Text>
+              </View>
             )}
-            onSwipeableRightOpen={() => handleDelete(exercise.id, index)}
-            onSwipeableClose={() => handleSwipeClose(index)}
-            onSwipeableLeftOpen={() => handleSwipeLeft(index)} // Handle left swipe
-            overshootRight={false}
+            renderRightActions={() => (
+              <View style={[styles.swipeActionRight]}>
+                <Text style={styles.swipeActionText}>Delete</Text>
+              </View>
+            )}
+            onSwipeableOpen={(direction) => {
+              if (direction === "left") {
+                handleCompleteSet(exercise.id, index);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              } else if (direction === "right") {
+                handleDeleteSet(exercise.id, index);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              }
+            }}
+            friction={2}
             overshootLeft={false}
-            rightThreshold={50}
-            leftThreshold={50}
+            overshootRight={false}
+            threshold={20}
           >
             <View
               style={[
                 styles.setRow,
-                completedSets[index] && styles.completedSet, // Apply completed style if set is marked as completed
+                set.completed ? styles.completedRow : null,
               ]}
             >
               <Text style={styles.setText}>Set {index + 1}</Text>
-
               <TextInput
                 style={styles.input}
                 placeholder="Reps"
                 keyboardType="numeric"
                 value={set.reps}
                 onChangeText={(text) => {
-                  handleSetsRepsChange(exercise.id, "reps", text, index);
-                  handleAddSetsReps(exercise.id, index, "reps", text);
+                  handleSetsRepsChange(exercise.id, index, "reps", text);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
               />
+              <TouchableOpacity
+                onPress={() => handleCompleteSet(exercise.id, index)}
+                style={[styles.completeButton, set.completed]}
+              >
+                <Text style={styles.completeButtonText}>
+                  {set.completed ? "Done!" : "Finish"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </Swipeable>
         ))}
-      </ScrollView>
 
-      <TouchableOpacity onPress={() => handleAddRow(exercise.id)}>
-        <Text style={styles.addRowText}>Add Row</Text>
-      </TouchableOpacity>
+        {/* Conditionally render Add Row */}
+        {isEditing && (
+          <>
+            <TouchableOpacity onPress={() => handleAddRow(exercise.id)}>
+              <Text style={styles.addRowText}>Add Row</Text>
+            </TouchableOpacity>
+          </>
+        )}
+        {/* Toggle Edit mode */}
+        <TouchableOpacity onPress={toggleEditing}>
+          <Text style={styles.doneEditingText}>
+            {isEditing ? "Done Editing" : "Edit"}
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => handleDeleteExercise(exercise.id)}
-        style={styles.deleteButton}
-      >
-        <Text style={styles.deleteButtonText}>Delete Exercise</Text>
-      </TouchableOpacity>
-    </View>
+      </View>
+    </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
   exerciseContainer: {
-    backgroundColor: Colors.lightGray,
+    backgroundColor: Colors.primary,
     padding: 12,
     borderRadius: 10,
     marginBottom: 16,
@@ -150,93 +230,118 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  deleteIconContainer: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    padding: 6,
+    borderRadius: 15,
+    elevation: 5,
+  },
+  deleteIcon: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: Colors.red,
+  },
   exerciseText: {
     fontSize: 18,
     color: Colors.dark_gray,
     fontWeight: "600",
   },
+  workoutGroup: {
+    fontSize: 14,
+    color: Colors.dark_gray,
+    marginBottom: 8,
+  },
   setRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
     alignItems: "center",
+    marginBottom: 8,
     backgroundColor: Colors.white,
-    borderRadius: 5,
     padding: 8,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: Colors.ut_burnt_orange,
   },
-  completedSet: {
-    backgroundColor: Colors.green, // Mark completed sets with a green background
+  completedRow: {
+    borderColor: Colors.ut_burnt_orange,
+    borderWidth: 2,
   },
   setText: {
     fontSize: 16,
     fontWeight: "bold",
     color: Colors.dark_gray,
-    width: "30%",
   },
   input: {
     height: 40,
     borderColor: Colors.gray,
     borderWidth: 1,
     borderRadius: 5,
-    width: "60%",
+    width: "45%",
     paddingLeft: 8,
     fontSize: 16,
+    marginBottom: 8,
   },
   addRowText: {
-    color: Colors.ut_burnt_orange,
+    color: Colors.white,
     fontWeight: "bold",
     marginTop: 8,
     textAlign: "center",
     fontSize: 16,
-  },
-  deleteButton: {
-    marginTop: 24,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    width: "50%",
-    alignSelf: "center",
-    alignItems: "center",
-    backgroundColor: Colors.red,
-    elevation: 3,
-  },
-  deleteButtonText: {
-    color: Colors.white,
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  workoutGroup: {
-    fontSize: 12,
-    color: Colors.gray,
-    fontStyle: "italic",
-    paddingBottom: 8,
-    textDecorationLine: "underline",
-  },
-  deleteButtonContainer: {
-    backgroundColor: Colors.red,
-    justifyContent: "center",
-    alignItems: "center",
-    width: 80,
-    height: 60,
+    backgroundColor: Colors.ut_burnt_orange,
+    padding: 8,
     borderRadius: 5,
-    marginLeft: -10,
-  },
-  deleteText: {
-    color: Colors.white,
-    fontWeight: "bold",
-  },
-  leftSwipeAction: {
-    backgroundColor: Colors.light_green,
-    justifyContent: "center",
-    alignItems: "center",
     width: 100,
-    height: 60,
-    borderRadius: 5,
+    alignSelf: "center",
+
   },
-  leftSwipeText: {
+  doneEditingText: {
+    color: Colors.ut_burnt_orange,
+    fontWeight: "bold",
+    marginTop: 20,
+    textAlign: "center",
+    fontSize: 16,
+  },
+  completeButton: {
+    backgroundColor: Colors.ut_burnt_orange,
+    padding: 8,
+    borderRadius: 5,
+    width: 80,
+    alignItems: "center",
+  },
+  completeButtonText: {
     color: Colors.white,
     fontWeight: "bold",
+    textAlign: "center",
+  },
+  swipeActionLeft: {
+    backgroundColor: Colors.ut_burnt_orange,
+    justifyContent: "center",
+    flexDirection: "row",
+    marginBottom: 8,
+    padding: 8,
+    borderRadius: 5,
+  },
+  swipeActionRight: {
+    backgroundColor: Colors.red,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    marginBottom: 8,
+    backgroundColor: Colors.red,
+    padding: 8,
+    borderRadius: 5,
+  },
+  swipeActionText: {
+    color: Colors.white,
+    fontWeight: "bold",
+  },
+  closeIcon: {
+    width: 20,
+    height: 20,
+    backgroundColor: Colors.primary,
+    tintColor: Colors.ut_burnt_orange,
   },
 });
 

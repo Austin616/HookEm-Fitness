@@ -262,28 +262,35 @@ const useFetchWorkout = () => {
     };
 
     const fetchCompletedSetsFromExercise = async (workoutName, workoutDate, exerciseId) => {
-      try {
-        if (user) {
+        try {
+          if (user) {
             const workoutId = `${workoutName}-${workoutDate}`;
             const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
             const workoutSnap = await getDoc(workoutRef);
-    
+      
             if (workoutSnap.exists()) {
-                const workoutData = workoutSnap.data();
-                const exercise = workoutData.exercises.find(
+              const workoutData = workoutSnap.data();
+              const exercise = workoutData.exercises.find(
                 (exercise) => exercise.id === exerciseId
-                );
-                return exercise ? exercise.setsData.filter(set => set.completed) : []; // Return completed sets if found
+              );
+      
+              // Ensure setsData is always initialized as an empty array if it's missing
+              const setsData = exercise?.setsData || [];
+      
+              // Return completed sets if found, or an empty array if no sets are available
+              return setsData.filter(set => set.completed);
             } else {
-                console.log("Workout not found:", workoutId);
-                return [];
+              console.log("Workout not found:", workoutId);
+              return [];
             }
-            }
+          }
         } catch (error) {
-            console.error("Error fetching completed sets from exercise:", error);
-            return [];
+          console.error("Error fetching completed sets from exercise:", error);
+          return [];
         }
-    };
+      };
+      
+      
   
 
   const fetchExerciseFromWorkout = async (workoutName, workoutDate) => {
