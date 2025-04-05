@@ -140,27 +140,17 @@ const useFetchWorkout = () => {
         const workoutId = `${workoutName}-${workoutDate}`; // Unique workout ID
         const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
         const workoutSnap = await getDoc(workoutRef);
-  
+
         if (workoutSnap.exists()) {
           const workoutData = workoutSnap.data();
           const updatedExercises = workoutData.exercises.map((exercise) => {
             if (exercise.id === exerciseId) {
-              return { 
-                ...exercise, 
-                setsData: setsData.map((set, index) => ({
-                  ...set,
-                  sets: index + 1, // Automatically assign the number of sets based on the row number
-                })),
-              };
+              return { ...exercise, setsData }; // Update setsData for the specific exercise
             }
             return exercise;
           });
-  
-          await setDoc(
-            workoutRef,
-            { ...workoutData, exercises: updatedExercises },
-            { merge: true }
-          );
+
+          await setDoc(workoutRef, { exercises: updatedExercises }, { merge: true });
           console.log("Sets and reps added to exercise:", workoutId);
         } else {
           console.log("Workout not found:", workoutId);

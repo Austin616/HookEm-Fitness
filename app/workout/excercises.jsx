@@ -7,7 +7,6 @@ import {
   Image,
   Alert,
   Modal,
-  Button,
 } from "react-native";
 import Colors from "../../assets/colors";
 import useFetchWorkout from "./fetchWorkout";
@@ -17,7 +16,7 @@ import {
 } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import closeIcon from "../../assets/images/close.png";
-import { Picker } from "@react-native-picker/picker"; // Import Picker
+import { Picker } from "@react-native-picker/picker";
 
 const Exercise = ({
   exercise,
@@ -37,6 +36,7 @@ const Exercise = ({
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [selectedReps, setSelectedReps] = useState(null);
   const [setIndexForPicker, setSetIndexForPicker] = useState(null);
+  const [pendingUploadExerciseId, setPendingUploadExerciseId] = useState(null);
 
   const fetchCompletedSet = async (exerciseId) => {
     try {
@@ -128,25 +128,25 @@ const Exercise = ({
 
   const handleDonePicker = () => {
     if (setIndexForPicker !== null) {
-      handleAddSetsReps(exercise.id); // Save the updated sets and reps
       handleSetsRepsChange(
         exercise.id,
         setIndexForPicker,
         "reps",
         selectedReps
       );
+      setPendingUploadExerciseId(exercise.id); // Trigger useEffect
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setIsPickerVisible(false);
-
     }
   };
-
+  
   useEffect(() => {
-    if (exercise.id) {
-      fetchCompletedSet(exercise.id);
+    if (pendingUploadExerciseId) {
+      handleAddSetsReps(pendingUploadExerciseId);
+      setPendingUploadExerciseId(null); 
     }
-  }
-  , [exercise.id, setsReps]);
+  }, [setsReps]);
+  
 
   return (
     <GestureHandlerRootView>
