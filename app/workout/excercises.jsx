@@ -37,6 +37,7 @@ const Exercise = ({
   const [selectedReps, setSelectedReps] = useState(null);
   const [setIndexForPicker, setSetIndexForPicker] = useState(null);
   const [pendingUploadExerciseId, setPendingUploadExerciseId] = useState(null);
+  const [pendingCompleteExerciseId, setPendingCompleteExerciseId] = useState(null);
 
   const fetchCompletedSet = async (exerciseId) => {
     try {
@@ -56,13 +57,20 @@ const Exercise = ({
 
   const handleCompleteSet = async (exerciseId, setIndex) => {
     try {
-      setSetsReps((prev) => ({
-        ...prev,
-        [exerciseId]: prev[exerciseId].map((set, i) =>
-          i === setIndex ? { ...set, completed: !set.completed } : set
-        ),
-      }));
-
+      setSetsReps((prev) => {
+        const updated = {
+          ...prev,
+          [exerciseId]: prev[exerciseId].map((set, i) =>
+            i === setIndex ? { ...set, completed: !set.completed } : set
+          ),
+        };
+        return updated;
+      });
+      
+      setPendingCompleteExerciseId(exerciseId);
+      fetchCompletedSet(exerciseId);
+      
+  
       await fetchCompletedSetsFromExercise(
         workoutName,
         workoutDate,
@@ -70,7 +78,7 @@ const Exercise = ({
         setIndex
       );
       fetchCompletedSet(exerciseId);
-
+  
       if (swipeableRefs.current[`${exercise.id}-${setIndex}`]) {
         swipeableRefs.current[`${exercise.id}-${setIndex}`].close();
       }
@@ -116,16 +124,11 @@ const Exercise = ({
     setIsEditing(false); // Exit edit mode after deletion
   };
 
-  useEffect(() => {
-    if (exercise.id) {
-      fetchCompletedSet(exercise.id);
-    }
-  }, [exercise.id, setsReps]);
-
+  
   const handleRepsPickerChange = (itemValue) => {
     setSelectedReps(itemValue);
   };
-
+  
   const handleDonePicker = () => {
     if (setIndexForPicker !== null) {
       handleSetsRepsChange(
@@ -134,11 +137,18 @@ const Exercise = ({
         "reps",
         selectedReps
       );
-      setPendingUploadExerciseId(exercise.id); // Trigger useEffect
+      setPendingUploadExerciseId(exercise.id); 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setIsPickerVisible(false);
     }
   };
+
+  useEffect(() => {
+    if (pendingCompleteExerciseId) {
+      handleAddSetsReps(pendingCompleteExerciseId);
+      setPendingCompleteExerciseId(null);
+    }
+  }, [setsReps]);
   
   useEffect(() => {
     if (pendingUploadExerciseId) {
