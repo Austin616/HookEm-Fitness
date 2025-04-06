@@ -396,6 +396,9 @@ const useFetchWorkout = () => {
     if (user) {
       fetchUserData();
       fetchExistingWorkouts();
+      fetchExercises();
+      fetchWorkoutsInMuscleGroup();
+      
     }
   }, [user]);
 

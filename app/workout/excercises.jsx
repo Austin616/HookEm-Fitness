@@ -28,7 +28,6 @@ const Exercise = ({
   handleDeleteExercise,
   workoutName,
   workoutDate,
-  setCompletedSets,
 }) => {
   const { fetchCompletedSetsFromExercise } = useFetchWorkout();
   const swipeableRefs = useRef({});
@@ -38,22 +37,6 @@ const Exercise = ({
   const [setIndexForPicker, setSetIndexForPicker] = useState(null);
   const [pendingUploadExerciseId, setPendingUploadExerciseId] = useState(null);
   const [pendingCompleteExerciseId, setPendingCompleteExerciseId] = useState(null);
-
-  const fetchCompletedSet = async (exerciseId) => {
-    try {
-      const completedSets = await fetchCompletedSetsFromExercise(
-        workoutName,
-        workoutDate,
-        exerciseId
-      );
-      setCompletedSets((prev) => ({
-        ...prev,
-        [exerciseId]: completedSets,
-      }));
-    } catch (error) {
-      console.error("Error fetching completed sets from exercise:", error);
-    }
-  };
 
   const handleCompleteSet = async (exerciseId, setIndex) => {
     try {
@@ -66,18 +49,14 @@ const Exercise = ({
         };
         return updated;
       });
-      
+    
       setPendingCompleteExerciseId(exerciseId);
-      fetchCompletedSet(exerciseId);
-      
-  
       await fetchCompletedSetsFromExercise(
         workoutName,
         workoutDate,
         exerciseId,
         setIndex
       );
-      fetchCompletedSet(exerciseId);
   
       if (swipeableRefs.current[`${exercise.id}-${setIndex}`]) {
         swipeableRefs.current[`${exercise.id}-${setIndex}`].close();
@@ -111,20 +90,6 @@ const Exercise = ({
     );
   };
 
-  const toggleEditing = () => {
-    if (isEditing) {
-      // Save logic here (e.g., auto-save when done editing)
-      handleAddSetsReps(exercise.id); // Automatically save the sets and reps
-    }
-    setIsEditing((prev) => !prev); // Toggle editing mode
-  };
-
-  const deleteExercise = () => {
-    handleDeleteExercise(exercise.id); // Delete exercise when "X" is pressed
-    setIsEditing(false); // Exit edit mode after deletion
-  };
-
-  
   const handleRepsPickerChange = (itemValue) => {
     setSelectedReps(itemValue);
   };
@@ -141,6 +106,18 @@ const Exercise = ({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setIsPickerVisible(false);
     }
+  };
+
+  const toggleEditing = () => {
+    if (isEditing) {
+      handleAddSetsReps(exercise.id);
+    }
+    setIsEditing((prev) => !prev); 
+  };
+
+  const deleteExercise = () => {
+    handleDeleteExercise(exercise.id); 
+    setIsEditing(false); 
   };
 
   useEffect(() => {
@@ -190,7 +167,7 @@ const Exercise = ({
               </View>
             )}
             renderLeftActions={() =>
-              isEditing ? ( // Only show the delete swipe action if isEditing is true
+              isEditing ? (
                 <View style={[styles.swipeActionLeft]}>
                   <Text style={styles.swipeActionText}>Delete</Text>
                 </View>
@@ -230,14 +207,20 @@ const Exercise = ({
                   {set.reps ? `${set.reps} reps` : "Select Reps"}
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
-                onPress={() => handleCompleteSet(exercise.id, index)}
-                style={[styles.completeButton, set.completed]}
+                onPress={() => {
+                  setSetIndexForPicker(index);
+                  setSelectedReps(set.reps);
+                  setIsPickerVisible(true);
+                }}
+                style={styles.input}
               >
-                <Text style={styles.completeButtonText}>
-                  {set.completed ? "Done!" : "Finish"}
+                <Text style={styles.pickerText}>
+                  {set.reps ? `${set.reps} reps` : "Select Reps"}
                 </Text>
               </TouchableOpacity>
+
             </View>
           </Swipeable>
         ))}
@@ -363,16 +346,14 @@ const styles = StyleSheet.create({
     color: Colors.dark_gray,
   },
   input: {
-    height: 40,  // Ensure the input field has a fixed height
-    borderColor: Colors.gray,
-    borderWidth: 1,
+    backgroundColor: Colors.white,
+    padding: 8,
     borderRadius: 5,
-    width: "45%",
-    paddingLeft: 8,
-    fontSize: 16,
-    justifyContent: "center",  // Ensure input is centered vertically
-    alignItems: "center",  // Center content horizontally
-    textAlignVertical: "center",  // Center text vertically in the input
+    borderWidth: 1,
+    borderColor: Colors.gray,
+    flex: 1,
+    marginLeft: 8,
+
   },
   addRowText: {
     color: Colors.white,

@@ -1,15 +1,17 @@
 // signOut.js (or any utility file)
 import { getAuth } from "firebase/auth";
+import {useRouter} from "expo-router";
 
-const SignOut = (navigation) => {
+const SignOut = () => {
+  const router = useRouter();
   try {
     const auth = getAuth();
     auth
       .signOut()
       .then(() => {
         console.log("User signed out successfully");
-        navigation.navigate("Landing"); // Navigate to Landing after sign-out
-      })
+        router.push("/index"); // Redirect to the login screen after sign out
+        })
       .catch((error) => {
         console.error("Sign out error:", error);
       });

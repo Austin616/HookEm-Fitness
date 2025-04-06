@@ -1,9 +1,21 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  TextInput,
+} from "react-native";
 import { useRouter } from "expo-router"; // Use Expo Router
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import Colors from "../assets/colors"; // Adjust path based on your project
+import CustomHeader from "./components/CustomHeader";
 
 export default function SignUp() {
   const router = useRouter();
@@ -19,7 +31,11 @@ export default function SignUp() {
 
     try {
       const auth = getAuth();
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       // Update user profile with name
@@ -47,35 +63,38 @@ export default function SignUp() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Join Us!</Text>
-      <Text style={styles.subtitle}>Create an account to get started</Text>
+    <View style={{ flex: 1, backgroundColor: Colors.primary, padding: 16 }}>
+      <CustomHeader showBackButton />
+      <View style={styles.container}>
+        <Text style={styles.title}>Join Us!</Text>
+        <Text style={styles.subtitle}>Create an account to get started</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        value={email}
-        placeholder="Email"
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+        />
+        <TextInput
+          style={styles.input}
+          value={email}
+          placeholder="Email"
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
 
-      <TouchableOpacity onPress={handleSignUp} style={styles.signUpButton}>
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={handleSignUp} style={styles.signUpButton}>
+          <Text style={styles.buttonText}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

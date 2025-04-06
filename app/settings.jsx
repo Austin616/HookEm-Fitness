@@ -19,13 +19,14 @@ import profileIcon from "../assets/images/profile-icon.png";
 import { useRouter } from "expo-router";
 import { useUser } from "./UserContext";
 import CustomHeader from "./components/CustomHeader";
+import { getAuth } from "firebase/auth";
 
 function Settings() {
   const [profilePicture, setProfilePicture] = useState(profileIcon);
   const [newProfilePicture, setNewProfilePicture] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
   const router = useRouter();
-  const { userId: contextUserId, onSignOut } = useUser(); // Access userId from context
+  const { userId: contextUserId } = useUser();
 
   // Editable fields
   const [name, setName] = useState("");
@@ -35,7 +36,7 @@ function Settings() {
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
-  const [activePicker, setActivePicker] = useState(null); // Track the active picker
+  const [activePicker, setActivePicker] = useState(null);
 
   useEffect(() => {
     const getPermission = async () => {
@@ -49,7 +50,7 @@ function Settings() {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const userDocRef = doc(db, "users", contextUserId); // use contextUserId here
+        const userDocRef = doc(db, "users", contextUserId);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
@@ -133,41 +134,67 @@ function Settings() {
 
   const handleSaveChanges = async () => {
     try {
-      const userDocRef = doc(db, "users", contextUserId); // use contextUserId here
-      let profileImageUrl = profilePicture.uri;
-
+      const userDocRef = doc(db, "users", contextUserId);
+  
+      let profileImageUrl = null;
+  
+      // Only upload and use a new picture if the user picked one
       if (newProfilePicture) {
         profileImageUrl = await uploadProfilePicture();
         setProfilePicture({ uri: profileImageUrl });
       }
-
+  
       const updatedProfileData = {
         name,
         email,
-        height: `${heightFeet}' ${heightInches}in`,
+        height: `${heightFeet}' ${heightInches}`,
         weight,
         goal,
         targetWeight,
-        profilePicture: profileImageUrl,
       };
-
+  
+      // Only update profilePicture if user picked a new one
+      if (profileImageUrl) {
+        updatedProfileData.profilePicture = profileImageUrl;
+      }
+  
       await updateDoc(userDocRef, updatedProfileData);
       setNewProfilePicture(null);
       Alert.alert("Success", "Profile updated successfully!");
-      router.push("/dashboard"); // Adjust the navigation after update
+      router.push("/dashboard");
     } catch (error) {
       console.error("Error updating profile:", error);
       Alert.alert("Error", "There was an error updating your profile.");
     }
   };
+  
 
   const handlePickerPress = (picker) => {
     // If the picker is already active, close it, otherwise open it
     setActivePicker(activePicker === picker ? null : picker);
   };
 
+  const onSignOut = () => {
+      console.log("Signing out...");
+      console.log("User ID:", contextUserId); 
+      try {
+        const auth = getAuth();
+        auth
+          .signOut()
+          .then(() => {
+            console.log("User signed out successfully");
+            router.push("/");
+          })
+          .catch((error) => {
+            console.error("Sign out error:", error);
+          });
+      } catch (error) {
+        console.error("Error signing out:", error);
+      }
+  }
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
       <CustomHeader showBackButton/>
       <TouchableOpacity onPress={handleChangeProfilePicture}>
         <Image

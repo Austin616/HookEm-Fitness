@@ -7,13 +7,8 @@ const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
 
-  const handleSignOut = () => {
-    // Handle sign out logic (you can reset userId or clear auth state here)
-    setUserId(null);
-  };
-
   return (
-    <UserContext.Provider value={{ userId, setUserId, handleSignOut }}>
+    <UserContext.Provider value={{ userId, setUserId }}>
       {children}
     </UserContext.Provider>
   );

@@ -15,6 +15,7 @@ import useFetchWorkout from "./fetchWorkout";
 import { useFocusEffect } from "expo-router";
 import MuscleGroupModal from "./muscleGroupModel";
 import Exercise from "./excercises";
+import { useIsFocused } from "@react-navigation/native";
 
 const WorkoutDetail = () => {
   const router = useRouter();
@@ -23,7 +24,7 @@ const WorkoutDetail = () => {
   const [exercises, setExercises] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [setsReps, setSetsReps] = useState({});
-  const [completedSets, setCompletedSets] = useState({});
+  const isFocused = useIsFocused(); // Hook to check if the screen is focused
 
   const {
     handleDeleteWorkout,
@@ -32,8 +33,6 @@ const WorkoutDetail = () => {
     deleteExerciseFromWorkout,
     addSetsandRepsToExercise,
     fetchSetsandRepsFromExercise,
-    handleCompletedSet,
-    fetchCompletedSetsFromExercise,
   } = useFetchWorkout();
 
   const getMuscleGroups = async () => {
@@ -49,7 +48,7 @@ const WorkoutDetail = () => {
       );
       setExercises(exercisesForWorkout);
     }
-  };
+  };  
 
   const fetchSetsReps = async (exerciseId) => {
     const setsRepsData = await fetchSetsandRepsFromExercise(
@@ -63,28 +62,18 @@ const WorkoutDetail = () => {
     }));
   };
 
-  const fetchCompletedSets = async (exerciseId) => {
-    try {
-      const completedSets = await fetchCompletedSetsFromExercise(
-        workoutName,
-        workoutDate,
-        exerciseId
-      );
-      setCompletedSets((prev) => ({
-        ...prev,
-        [exerciseId]: completedSets,
-      }));
-    } catch (error) {
-      console.error("Error fetching completed sets from exercise:", error);
-    }
-  };
-
   useFocusEffect(
     React.useCallback(() => {
       getMuscleGroups();
       fetchExercises();
-    }, [])
+    }, [workoutName, workoutDate])  // Add the dependencies to refetch when the workoutName or workoutDate changes
   );
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchExercises();
+    }
+  }, [isFocused, workoutName, workoutDate]);  
 
   const handleNavigateToMuscleGroup = (muscleGroup) => {
     router.push(
@@ -122,16 +111,17 @@ const WorkoutDetail = () => {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await deleteExerciseFromWorkout(workoutName, workoutDate, exerciseId);
-            
-            // Refresh the list of exercises
+            await deleteExerciseFromWorkout(
+              workoutName,
+              workoutDate,
+              exerciseId
+            );
             fetchExercises();
           },
         },
       ]
     );
   };
-  
 
   const toggleModal = () => {
     setModalVisible(!modalVisible);
@@ -178,15 +168,9 @@ const WorkoutDetail = () => {
     });
   };
 
-  const completedSet = async (exerciseId, setIndex) => {
-    await handleCompletedSet(workoutName, workoutDate, exerciseId, setIndex);
-    fetchCompletedSets(exerciseId);
-  };
-
   useEffect(() => {
     exercises.forEach((exercise) => {
       fetchSetsReps(exercise.id);
-      fetchCompletedSets(exercise.id);
     });
   }, [exercises]);
 
@@ -209,11 +193,9 @@ const WorkoutDetail = () => {
             handleSetsRepsChange={handleSetsRepsChange}
             handleAddSetsReps={handleAddSetsReps}
             handleAddRow={handleAddRow}
-            completedSets={completedSet}
             handleDeleteExercise={handleDeleteExercise}
             workoutName={workoutName}
             workoutDate={workoutDate}
-            setCompletedSets={setCompletedSets}
             setSetsReps={setSetsReps}
           />
         ))}

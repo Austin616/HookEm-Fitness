@@ -52,7 +52,9 @@ const UserStats = ({ userData }) => {
       />
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.email}>{email}</Text>
-      <Text style={styles.stat}>Height: {height}</Text>
+      <Text style={styles.stat}>
+        Height: {height}
+      </Text>
       <Text style={styles.stat}>Weight: {weight} lbs</Text>
       <Text style={styles.stat}>Goal: {goal}</Text>
       <Text style={styles.stat}>Target Weight: {targetWeight} lbs</Text>

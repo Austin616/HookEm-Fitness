@@ -11,16 +11,18 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { doc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { db } from "../../firebaseConfig";
-import Colors from "../../assets/colors";
+import { db } from "../firebaseConfig";
+import Colors from "../assets/colors";
+import { useRouter } from "expo-router";
 
-const Tutorial = ({ navigation }) => {
+const Tutorial = () => {
   const [step, setStep] = useState(1);
   const [heightFeet, setHeightFeet] = useState("5");
   const [heightInches, setHeightInches] = useState("0"); 
   const [weight, setWeight] = useState("");
   const [goal, setGoal] = useState("buildMuscle");
   const [targetWeight, setTargetWeight] = useState("");
+  const router = useRouter();
 
   const handleNextStep = () => {
     if (step === 1 && (!heightFeet || !heightInches)) {
@@ -53,7 +55,7 @@ const Tutorial = ({ navigation }) => {
           },
           { merge: true } // ✅ This merges data instead of replacing it
         );
-        navigation.navigate("Dashboard");
+        router.push("/dashboard");
       } catch (error) {
         console.error("Error saving data:", error);
       }
@@ -72,7 +74,7 @@ const Tutorial = ({ navigation }) => {
               style={styles.picker}
             >
               {[...Array(10).keys()].map((i) => (
-                <Picker.Item key={i} label={`${i + 4} ft`} value={`${i + 4}`} />
+                <Picker.Item key={i} label={`${i + 4}`} value={`${i + 4}`} />
               ))}
             </Picker>
 
@@ -82,7 +84,7 @@ const Tutorial = ({ navigation }) => {
               style={styles.picker}
             >
               {[...Array(12).keys()].map((i) => (
-                <Picker.Item key={i} label={`${i} in`} value={`${i}`} />
+                <Picker.Item key={i} label={`${i}`} value={`${i}`} />
               ))}
             </Picker>
           </View>

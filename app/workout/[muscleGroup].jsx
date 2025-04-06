@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  Alert,
 } from "react-native";
 import Modal from "react-native-modal";
 import { useLocalSearchParams } from "expo-router";
@@ -14,15 +15,16 @@ import CustomHeader from "../components/CustomHeader";
 import Colors from "../../assets/colors";
 import closeIcon from "../../assets/images/close.png";
 import useFetchWorkout from "./fetchWorkout";
-import { useRouter } from "expo-router";
 
 const MuscleGroupDetail = () => {
   const { muscleGroup, workoutName, workoutDate } = useLocalSearchParams();
-  const [exercises, setExercises] = useState([]); // Ensure it's initialized as an empty array
+  const [exercises, setExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const { addExerciseToWorkout, fetchExercises } = useFetchWorkout();
-  const router = useRouter();
+  const {
+    fetchExerciseFromWorkout,
+    addExerciseToWorkout,
+  } = useFetchWorkout();
 
   // Filter states
   const [forceFilter, setForceFilter] = useState("");
@@ -30,6 +32,12 @@ const MuscleGroupDetail = () => {
   const [mechanicFilter, setMechanicFilter] = useState("");
   const [equipmentFilter, setEquipmentFilter] = useState("");
   const [isModalVisible, setModalVisible] = useState(false);
+  const [uniqueEquipment, setUniqueEquipment] = useState([]);
+
+  // Dynamic filter values
+  const forceOptions = ["push", "pull", "static"];
+  const levelOptions = ["beginner", "intermediate", "expert"];
+  const mechanicOptions = ["isolation", "compound"];
 
   useEffect(() => {
     console.log("Muscle Group:", muscleGroup);
@@ -48,6 +56,11 @@ const MuscleGroupDetail = () => {
           );
           setExercises(filteredExercises);
           setFilteredExercises(filteredExercises); // Initially show all exercises
+
+          // Extract unique equipment from exercises
+          const uniqueEquip = [...new Set(filteredExercises.map(ex => ex.equipment).filter(equipment => equipment !== null))];
+          setUniqueEquipment(uniqueEquip);
+          console.log("Unique Equipment:", uniqueEquip);
         } else {
           console.error("Error fetching data", response.status);
         }
@@ -105,21 +118,11 @@ const MuscleGroupDetail = () => {
     setModalVisible(false);
   };
 
-  const handleAddExercise = async (exercise) => {
-    try {
-      const workoutId = `${workoutName}-${workoutDate}`;
-      if (!workoutName || !workoutDate) {
-        console.error("Workout ID is missing");
-        return;
-      }
-
-      // Add exercise to workout
-      await addExerciseToWorkout(workoutId, exercise);
-      console.log("Exercise added:", exercise.name);
-      router.push(`/workout/WorkoutDetail?workoutName=${workoutName}&workoutDate=${workoutDate}`); // Navigate to the workout detail page
-    } catch (error) {
-      console.error("Error adding exercise to workout:", error);
-    }
+  const handleAddExercise = (exercise) => {
+    const workoutId = `${workoutName}-${workoutDate}`;
+    addExerciseToWorkout(workoutId, exercise);
+    Alert.alert("Exercise Added", `${exercise.name} has been added to your workout.`);
+    fetchExerciseFromWorkout(workoutName, workoutDate); // Fetch updated exercises
   };
 
   return (
@@ -160,8 +163,122 @@ const MuscleGroupDetail = () => {
           </TouchableOpacity>
           <ScrollView contentContainerStyle={styles.modalContent}>
             <Text style={styles.filterTitle}>Filter Options</Text>
-            {/* Filter sections */}
-            {/* Force, Level, Mechanic, Equipment Filters (same as before) */}
+
+            {/* Force Filters */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterCategory}>Force</Text>
+              <View style={styles.filterButtonsRow}>
+                {forceOptions.map((force) => (
+                  <TouchableOpacity
+                    key={force}
+                    style={
+                      forceFilter === force
+                        ? styles.filterOptionActive
+                        : styles.filterOption
+                    }
+                    onPress={() => setForceFilter(forceFilter === force ? "" : force)}
+                  >
+                    <Text
+                      style={
+                        forceFilter === force
+                          ? styles.filterOptionTextActive
+                          : styles.filterOptionText
+                      }
+                    >
+                      {force.charAt(0).toUpperCase() + force.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Level Filters */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterCategory}>Level</Text>
+              <View style={styles.filterButtonsRow}>
+                {levelOptions.map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={
+                      levelFilter === level
+                        ? styles.filterOptionActive
+                        : styles.filterOption
+                    }
+                    onPress={() => setLevelFilter(levelFilter === level ? "" : level)}
+                  >
+                    <Text
+                      style={
+                        levelFilter === level
+                          ? styles.filterOptionTextActive
+                          : styles.filterOptionText
+                      }
+                    >
+                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Mechanic Filters */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterCategory}>Mechanic</Text>
+              <View style={styles.filterButtonsRow}>
+                {mechanicOptions.map((mechanic) => (
+                  <TouchableOpacity
+                    key={mechanic}
+                    style={
+                      mechanicFilter === mechanic
+                        ? styles.filterOptionActive
+                        : styles.filterOption
+                    }
+                    onPress={() => setMechanicFilter(mechanicFilter === mechanic ? "" : mechanic)}
+                  >
+                    <Text
+                      style={
+                        mechanicFilter === mechanic
+                          ? styles.filterOptionTextActive
+                          : styles.filterOptionText
+                      }
+                    >
+                      {mechanic.charAt(0).toUpperCase() + mechanic.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Equipment Filters */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterCategory}>Equipment</Text>
+              <View style={styles.filterButtonsRow}>
+                {uniqueEquipment.length > 0 &&
+                  uniqueEquipment.map((equipment, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={
+                        equipmentFilter === equipment
+                          ? styles.filterOptionActive
+                          : styles.filterOption
+                      }
+                      onPress={() =>
+                        setEquipmentFilter(equipmentFilter === equipment ? "" : equipment)
+                      }
+                    >
+                      <Text
+                        style={
+                          equipmentFilter === equipment
+                            ? styles.filterOptionTextActive
+                            : styles.filterOptionText
+                        }
+                      >
+                        {equipment.charAt(0).toUpperCase() + equipment.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+              </View>
+            </View>
+
             <TouchableOpacity onPress={applyFilters} style={styles.applyButton}>
               <Text style={styles.applyButtonText}>Apply Filters</Text>
             </TouchableOpacity>
@@ -299,37 +416,28 @@ const styles = StyleSheet.create({
   },
   exerciseRow: {
     backgroundColor: Colors.ut_burnt_orange,
-    padding: 20,
-    marginBottom: 16,
+    padding: 15,
+    marginVertical: 5,
     borderRadius: 8,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "flex-start",
   },
   exerciseName: {
+    fontSize: 16,
     color: Colors.white,
-    fontSize: 18,
-    fontWeight: "bold",
   },
   noExercises: {
-    fontSize: 18,
-    color: "gray",
+    fontSize: 16,
+    color: Colors.white,
     textAlign: "center",
   },
   closeButton: {
     position: "absolute",
     top: 10,
     right: 10,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
   },
   closeButtonIcon: {
     width: 20,
     height: 20,
-    tintColor: Colors.ut_burnt_orange,
+    tintColor: "#333",
   },
 });
 

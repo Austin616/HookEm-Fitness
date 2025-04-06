@@ -1,9 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  TextInput,
+} from "react-native";
 import { useRouter } from "expo-router"; // Use Expo Router
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig"; // Adjust the path as necessary
 import Colors from "../assets/colors";
+import CustomHeader from "./components/CustomHeader";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -26,7 +34,10 @@ export default function LoginScreen() {
       if (error.code === "auth/invalid-email") {
         Alert.alert("Invalid Email", "Please enter a valid email address.");
       } else if (error.code === "auth/wrong-password") {
-        Alert.alert("Incorrect Password", "The password you entered is incorrect.");
+        Alert.alert(
+          "Incorrect Password",
+          "The password you entered is incorrect."
+        );
       } else {
         Alert.alert("Failed to log in", error.message);
       }
@@ -34,29 +45,32 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back!</Text>
-      <Text style={styles.subtitle}>Please sign in to continue</Text>
+    <View style={{ flex: 1, backgroundColor: Colors.primary, padding: 16 }}>
+      <CustomHeader showBackButton />
+      <View style={styles.container}>
+        <Text style={styles.title}>Welcome Back!</Text>
+        <Text style={styles.subtitle}>Please sign in to continue</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
 
-      <TouchableOpacity onPress={handleLogin} style={styles.signInButton}>
-        <Text style={styles.buttonText}>Sign In</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={handleLogin} style={styles.signInButton}>
+          <Text style={styles.buttonText}>Sign In</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -65,7 +79,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
     backgroundColor: Colors.primary,
     paddingHorizontal: 20,
   },
@@ -113,4 +126,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-
