@@ -34,7 +34,6 @@ const MuscleGroupDetail = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [uniqueEquipment, setUniqueEquipment] = useState([]);
 
-  // Dynamic filter values
   const forceOptions = ["push", "pull", "static"];
   const levelOptions = ["beginner", "intermediate", "expert"];
   const mechanicOptions = ["isolation", "compound"];
@@ -55,7 +54,7 @@ const MuscleGroupDetail = () => {
             exercise.primaryMuscles.includes(muscleGroup)
           );
           setExercises(filteredExercises);
-          setFilteredExercises(filteredExercises); // Initially show all exercises
+          setFilteredExercises(filteredExercises);
 
           // Extract unique equipment from exercises
           const uniqueEquip = [...new Set(filteredExercises.map(ex => ex.equipment).filter(equipment => equipment !== null))];
@@ -122,7 +121,7 @@ const MuscleGroupDetail = () => {
     const workoutId = `${workoutName}-${workoutDate}`;
     addExerciseToWorkout(workoutId, exercise);
     Alert.alert("Exercise Added", `${exercise.name} has been added to your workout.`);
-    fetchExerciseFromWorkout(workoutName, workoutDate); // Fetch updated exercises
+    fetchExerciseFromWorkout(workoutName, workoutDate);
   };
 
   return (
