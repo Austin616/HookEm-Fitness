@@ -10,6 +10,7 @@ import WorkoutSummary from "./components/workout";
 import ProgressChart from "./components/ProgressChart";
 import ChallengesLB from "./components/ChallengesLB";
 import Notifications from "./components/Notifications";
+import Gyms from "./gyms";
 import { useUser } from "./UserContext";
 
 export default function Dashboard() {
@@ -94,6 +95,7 @@ export default function Dashboard() {
         <View style={styles.infoContainer}>
           <UserStats userData={userData} />
           <WorkoutSummary />
+          <Gyms />
           <ProgressChart />
           <ChallengesLB />
           <Notifications />
