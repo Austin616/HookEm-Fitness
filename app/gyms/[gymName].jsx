@@ -1,14 +1,33 @@
 import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import hoursData from "../../scraping/facilities_data.json";
 import {useLocalSearchParams} from "expo-router";
+import { useEffect, useState } from "react";
+import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
+import CustomHeader from "../components/CustomHeader";
+import Colors from "../../assets/colors";
 
 const GymDetail = () => {
   const router = useRouter();
   const { gymName } = useLocalSearchParams(); // Access the gymName from the route
   console.log(gymName);
 
-  const gymData = hoursData[gymName]; // Get the data for the specific gym
+  const [gymData, setGymData] = useState(null);
+
+  useEffect(() => {
+    const fetchGymData = async () => {
+      try {
+        const response = await fetch("https://recsports-scraping.onrender.com/facilities"); // Replace with your API endpoint
+        const data = await response.json();
+
+        setGymData(data.facilities[gymName]); 
+      } catch (error) {
+        console.error("Error fetching gym data:", error);
+      }
+    };
+
+    fetchGymData();
+  }
+  , [gymName]);
 
   if (!gymData) {
     return (
@@ -20,6 +39,7 @@ const GymDetail = () => {
 
   return (
     <View style={styles.container}>
+      <CustomHeader showBackButton />
       <Text style={styles.title}>{gymName} Details</Text>
 
       <View style={styles.infoContainer}>
@@ -42,7 +62,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.primary
   },
   title: {
     fontSize: 24,

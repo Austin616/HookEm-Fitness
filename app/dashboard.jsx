@@ -94,11 +94,7 @@ export default function Dashboard() {
         <Text style={styles.subtitle}>You're doing great today! Keep Strong 💪</Text>
         <View style={styles.infoContainer}>
           <UserStats userData={userData} />
-          <WorkoutSummary />
-          <Gyms />
-          <ProgressChart />
-          <ChallengesLB />
-          <Notifications />
+          <Gyms/>
         </View>
       </ScrollView>
     </View>
