@@ -6,10 +6,6 @@ import { doc, getDoc } from "firebase/firestore";
 import Colors from "../assets/colors";
 import CustomHeader from "./components/CustomHeader";
 import UserStats from "./components/UserStats";
-import WorkoutSummary from "./components/workout";
-import ProgressChart from "./components/ProgressChart";
-import ChallengesLB from "./components/ChallengesLB";
-import Notifications from "./components/Notifications";
 import Gyms from "./gyms";
 import { useUser } from "./UserContext";
 

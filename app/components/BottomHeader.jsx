@@ -1,5 +1,5 @@
 import { View, Image, StyleSheet } from "react-native";
-import { Link, usePathname } from "expo-router"; // Import usePathname to get the current route
+import { Link, usePathname } from "expo-router";
 import foodIcon from "../../assets/images/user.png";
 import homeIcon from "../../assets/images/home.png";
 import dumbellIcon from "../../assets/images/more.png";

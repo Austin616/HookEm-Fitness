@@ -46,6 +46,14 @@ const GymDetail = () => {
         <Text style={styles.infoTitle}>Today's Hours</Text>
         <Text style={styles.infoText}>{gymData["Today 's Hours"]}</Text>
 
+        <Text style={styles.infoTitle}>Operating Hours</Text>
+        {["Mon-Thu", "Fri", "Sat", "Sun"].map((day, index) => (
+          <View key={index} style={styles.hoursRow}>
+            <Text style={styles.day}>{day}:</Text>
+            <Text style={styles.hours}>{gymData[day]}</Text>
+          </View>
+        ))}
+        
         <Text style={styles.infoTitle}>Activities</Text>
         {gymData["Activities"].map((activity, index) => (
           <TouchableOpacity key={index} style={styles.card}>
@@ -58,14 +66,6 @@ const GymDetail = () => {
           <TouchableOpacity key={index} style={styles.card}>
             <Text style={styles.cardText}>{feature}</Text>
           </TouchableOpacity>
-        ))}
-
-        <Text style={styles.infoTitle}>Operating Hours</Text>
-        {["Mon-Thu", "Fri", "Sat", "Sun"].map((day, index) => (
-          <View key={index} style={styles.hoursRow}>
-            <Text style={styles.day}>{day}:</Text>
-            <Text style={styles.hours}>{gymData[day]}</Text>
-          </View>
         ))}
 
         <Text style={styles.infoTitle}>General Info</Text>

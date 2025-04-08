@@ -7,9 +7,9 @@ import {
   Alert,
   TextInput,
 } from "react-native";
-import { useRouter } from "expo-router"; // Use Expo Router
+import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebaseConfig"; // Adjust the path as necessary
+import { auth } from "../firebaseConfig";
 import Colors from "../assets/colors";
 import CustomHeader from "./components/CustomHeader";
 
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 5,
-    elevation: 5, // For Android
+    elevation: 5,
   },
   buttonText: {
     color: Colors.white,

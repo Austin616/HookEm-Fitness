@@ -9,7 +9,7 @@ import { useUser } from "../UserContext";
 const CustomHeader = ({ showBackButton = false, showSettingsButton = false, showLogo = false}) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { userId } = useUser(); // Access userId from UserContext
+  const { userId } = useUser();
 
   const title = pathname === "/dashboard" ? "Hook'Em Fitness" : "";
 
@@ -20,8 +20,8 @@ const CustomHeader = ({ showBackButton = false, showSettingsButton = false, show
       return;
     }
 
-    console.log("Navigating to settings with userId:", userId);
-    router.push("/settings"); // Adjust the path as necessary
+    // console.log("Navigating to settings with userId:", userId);
+    router.push("/settings");
   };
 
   return (
